@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Apexon Bank | Open Account</title>
+
+    <!-- PWA MANIFEST LINK -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(reg => console.log('Registered with scope:', reg.scope))
+            .catch(err => console.log('Registration failed:', err));
+        });
+      }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght=700&family=Space+Grotesk:wght=500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100vw;
+            min-height: 100vh;
+            background-color: #f4f6f8;
+            color: #1e293b;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            background-color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            color: #0f172a;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-color: #b38728;
+            box-shadow: 0 0 0 3px rgba(179, 135, 40, 0.15);
+        }
+
+        .error-msg {
+            font-size: 11px;
+            color: #ef4444;
+            margin-top: 4px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .action-btn {
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+        }
+        .action-btn:active {
+            transform: scale(0.98);
+        }
+
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: calc(100% - 16px) center;
+            background-size: 12px;
+        }
+
+        /* CUSTOM MODAL OVERLAY STYLING */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 360px;
+            padding: 30px 24px;
+            text-align: center;
+            border: 2px solid #b38728;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-shell" style="display: flex; flex-direction: column; width: 100%; min-height: 100vh;">
+        
+        <header style="display: grid; grid-template-columns: auto 1fr auto; align-items: center; padding: 16px 20px; background-color: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 1000;">
+            <a href="login.html" style="text-decoration: none; color: #0d6efd; font-size: 22px; font-weight: bold; padding-right: 15px; display: flex; align-items: center;">←</a>
+            <div class="logo" style="font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700; background: linear-gradient(135deg, #BF953F 0%, #FCF6BA 25%, #B38728 50%, #FBF5B7 75%, #AA771C 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap;">
+                Apexon Bank
+            </div>
+            <div style="width: 22px;"></div>
+        </header>
+
+        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 35px 20px; text-align: center; border-bottom: 3px solid #b38728;">
+            <h1 style="font-size: 24px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px;">Registering</h1>
+            <p style="font-size: 13px; color: #94a3b8; max-width: 340px; margin: 0 auto; line-height: 1.4;">
+                Create your online banking access profile.
+            </p>
+        </div>
+
+        <div class="app-body" style="flex-grow: 1; padding: 24px 20px; display: flex; flex-direction: column;">
+            
+            <form id="registrationForm" style="background: #ffffff; border-radius: 16px; padding: 24px 20px; border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 16px;">
+                
+                <!-- Full Name -->
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">👤 Full Name</label>
+                    <input type="text" id="fullName" placeholder="Legal full name" required>
+                </div>
+
+                <!-- User Name -->
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">🆔 Username for Login</label>
+                    <input type="text" id="username" placeholder="Choose a unique username" required>
+                </div>
+
+                <!-- Gmail -->
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">📩 Gmail Address</label>
+                    <input type="email" id="email" placeholder="yourname@gmail.com" required>
+                </div>
+
+                <!-- Date of Birth -->
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">📅 Date of Birth</label>
+                    <input type="date" id="dob" required>
+                </div>
+
+                <!-- Gender -->
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">🚻 Gender Selection</label>
+                    <select id="gender" required>
+                        <option value="" disabled selected>Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other / Corporate Entity</option>
+                    </select>
+                </div>
+
+                <!-- Nationality Dropdown -->
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">🌍 Nationality & Continent Link</label>
+                    <select id="nationality" required>
+                        <option value="" disabled selected>Select Nationality</option>
+                    </select>
+                </div>
+
+                <!-- Currency Dropdown -->
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">🪙 Primary Target Currency</label>
+                    <select id="currency" required>
+                        <option value="" disabled selected>Select Account Base Currency</option>
+                    </select>
+                </div>
+
+                <!-- Phone number -->
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">📱 Secure Telephone Link</label>
+                    <input type="tel" id="telephone" placeholder="Include dialing code (+...)" required>
+                </div>
+
+                <!-- Password -->
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">🔑 Password</label>
+                    <input type="password" id="password" placeholder="Create password" required>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">🔄 Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Re-enter password" required>
+                    <div class="error-msg" id="confirmPasswordError">Passwords do not match.</div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="action-btn" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);">
+                    ApexonBank Submit
+                </button>
+
+                <div style="text-align: center; font-size: 13px; color: #64748b; margin-top: 4px;">
+                    Already Registered? <a href="login.html" style="color: #0d6efd; text-decoration: none; font-weight: 600;">Sign In</a>
+                </div>
+
+            </form>
+
+        </div>
+
+        <footer style="background-color: #0f172a; color: #475569; padding: 20px; font-size: 11px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.06);">
+            <p>© 2026 Apexon Bank Group.</p>
+        </footer>
+
+    </div>
+
+    <!-- REQUIREMENT NOTICE MODAL -->
+    <div class="modal-overlay" id="noticeModal">
+        <div class="modal-card">
+            <div style="font-size: 40px; margin-bottom: 14px;">⚠️</div>
+            <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Consent Required</h2>
+            <p style="font-size: 14px; color: #475569; line-height: 1.5; margin-bottom: 24px;">
+                Please you can't register without the consent of a loved one, kindly ask a loved one to send you his or her link, thank you.
+            </p>
+            <button id="modalCloseBtn" style="width: 100%; padding: 12px; background: #b38728; color: #ffffff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;">
+                Understand & Close
+            </button>
+        </div>
+    </div>
+
+    <!-- COUNTRY MATRIX POPULATION SCRIPT -->
+    <script>
+    var countryMatrix = [
+        { name: "Afghanistan", flag: "🇦🇫", continent: "Asia", curCode: "AFN", curSym: "؋", bankCode: "010" },
+        { name: "Albania", flag: "🇦🇱", continent: "Europe", curCode: "ALL", curSym: "L", bankCode: "011" },
+        { name: "Algeria", flag: "🇩🇿", continent: "Africa", curCode: "DZD", curSym: "د.ج", bankCode: "012" },
+        { name: "Andorra", flag: "🇦🇩", continent: "Europe", curCode: "EUR", curSym: "€", bankCode: "013" },
+        { name: "Angola", flag: "🇦🇴", continent: "Africa", curCode: "AOA", curSym: "Kz", bankCode: "014" },
+        { name: "Argentina", flag: "🇦🇷", continent: "South America", curCode: "ARS", curSym: "$", bankCode: "015" },
+        { name: "Australia", flag: "🇦🇺", continent: "Oceania", curCode: "AUD", curSym: "$", bankCode: "036" },
+        { name: "Brazil", flag: "🇧🇷", continent: "South America", curCode: "BRL", curSym: "R$", bankCode: "076" },
+        { name: "Canada", flag: "🇨🇦", continent: "North America", curCode: "CAD", curSym: "$", bankCode: "124" },
+        { name: "China", flag: "🇨🇳", continent: "Asia", curCode: "CNY", curSym: "¥", bankCode: "156" },
+        { name: "Egypt", flag: "🇪🇬", continent: "Africa", curCode: "EGP", curSym: "E£", bankCode: "818" },
+        { name: "France", flag: "🇫🇷", continent: "Europe", curCode: "EUR", curSym: "€", bankCode: "250" },
+        { name: "Germany", flag: "🇩🇪", continent: "Europe", curCode: "EUR", curSym: "€", bankCode: "276" },
+        { name: "Ghana", flag: "🇬🇭", continent: "Africa", curCode: "GHS", curSym: "₵", bankCode: "288" },
+        { name: "India", flag: "🇮🇳", continent: "Asia", curCode: "INR", curSym: "₹", bankCode: "356" },
+        { name: "Kenya", flag: "🇰🇪", continent: "Africa", curCode: "KES", curSym: "KSh", bankCode: "404" },
+        { name: "Nigeria", flag: "🇳🇬", continent: "Africa", curCode: "NGN", curSym: "₦", bankCode: "566" },
+        { name: "South Africa", flag: "🇿🇦", continent: "Africa", curCode: "ZAR", curSym: "R", bankCode: "710" },
+        { name: "United Arab Emirates", flag: "🇦🇪", continent: "Asia", curCode: "AED", curSym: "د.إ", bankCode: "784" },
+        { name: "United Kingdom", flag: "🇬🇧", continent: "Europe", curCode: "GBP", curSym: "£", bankCode: "826" },
+        { name: "United States", flag: "🇺🇸", continent: "North America", curCode: "USD", curSym: "$", bankCode: "840" }
+    ];
+
+    (function() {
+        var nationSelect = document.getElementById("nationality");
+        var currencySelect = document.getElementById("currency");
+        var trackedCurrencies = {};
+
+        countryMatrix.forEach(function(item) {
+            var natOpt = document.createElement("option");
+            var natValText = item.flag + " " + item.name + " (" + item.continent + ")";
+            natOpt.value = item.name;
+            natOpt.dataset.code = item.bankCode;
+            natOpt.textContent = natValText;
+            nationSelect.appendChild(natOpt);
+
+            var curKey = item.curCode + "_" + item.curSym;
+            if (!trackedCurrencies[curKey]) {
+                trackedCurrencies[curKey] = true;
+                var curOpt = document.createElement("option");
+                curOpt.value = item.curSym; 
+                curOpt.textContent = item.flag + " " + item.curCode + " (" + item.curSym + ")";
+                currencySelect.appendChild(curOpt);
+            }
+        });
+    })();
+    </script>
+
+    <!-- FIREBASE REGISTRATION AND REDIRECT SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCrjHf4jXF-12q0Ux9FXuC9qvPbtSybiGg",
+            authDomain: "apexon-18436.firebaseapp.com",
+            projectId: "apexon-18436",
+            storageBucket: "apexon-18436.firebasestorage.app",
+            messagingSenderId: "860159843934",
+            appId: "1:860159843934:web:d149cd4766935be2525ecf",
+            measurementId: "G-TZ7QJMGJK0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const form = document.getElementById('registrationForm');
+        const modal = document.getElementById('noticeModal');
+        const modalBtn = document.getElementById('modalCloseBtn');
+        const passwordInp = document.getElementById('password');
+        const confirmPasswordInp = document.getElementById('confirmPassword');
+        const confirmPasswordError = document.getElementById('confirmPasswordError');
+
+        let pendingRegistrationData = null;
+
+        function generateAccountNumber(countryName) {
+            const countryMatch = countryMatrix.find(c => c.name === countryName);
+            const prefix = countryMatch ? countryMatch.bankCode : "100";
+            const randomDigits = Math.floor(1000000 + Math.random() * 9000000).toString();
+            return prefix + randomDigits;
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            confirmPasswordError.style.display = 'none';
+
+            if (passwordInp.value !== confirmPasswordInp.value) {
+                confirmPasswordError.style.display = 'block';
+                return;
+            }
+
+            const fullName = document.getElementById('fullName').value;
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const dob = document.getElementById('dob').value;
+            const gender = document.getElementById('gender').value;
+            const nationality = document.getElementById('nationality').value;
+            const currency = document.getElementById('currency').value;
+            const telephone = document.getElementById('telephone').value;
+            const password = passwordInp.value;
+
+            const accountNumber = generateAccountNumber(nationality);
+
+            pendingRegistrationData = {
+                fullName,
+                username,
+                email,
+                dob,
+                gender,
+                nationality,
+                currency,
+                telephone,
+                password,
+                accountNumber,
+                balance: "0.00"
+            };
+
+            // Display modal prompt
+            modal.classList.add('active');
+        });
+
+        modalBtn.addEventListener('click', async function() {
+            if (!pendingRegistrationData) return;
+
+            modalBtn.disabled = true;
+            modalBtn.textContent = "Creating Account...";
+
+            try {
+                // 1. Create User in Firebase Authentication with Email & Password
+                const userCredential = await createUserWithEmailAndPassword(
+                    auth, 
+                    pendingRegistrationData.email, 
+                    pendingRegistrationData.password
+                );
+                const user = userCredential.user;
+
+                // 2. Build User Object
+                const userProfile = {
+                    uid: user.uid,
+                    fullName: pendingRegistrationData.fullName,
+                    username: pendingRegistrationData.username.toLowerCase(),
+                    email: pendingRegistrationData.email.toLowerCase(),
+                    dob: pendingRegistrationData.dob,
+                    gender: pendingRegistrationData.gender,
+                    nationality: pendingRegistrationData.nationality,
+                    currency: pendingRegistrationData.currency,
+                    telephone: pendingRegistrationData.telephone,
+                    accountNumber: pendingRegistrationData.accountNumber,
+                    balance: "0.00",
+                    createdAt: new Date().toISOString()
+                };
+
+                // 3. Save User Metadata in Firestore (mapped by UID)
+                await setDoc(doc(db, "users", user.uid), userProfile);
+
+                // 4. Save Username Lookup entry to support logging in via Username
+                await setDoc(doc(db, "usernames", pendingRegistrationData.username.toLowerCase()), {
+                    email: pendingRegistrationData.email.toLowerCase(),
+                    uid: user.uid
+                });
+
+                modal.classList.remove('active');
+                
+                // 5. Redirect directly to login.html
+                alert("Account created successfully! Please sign in with your credentials.");
+                window.location.href = "login.html";
+
+            } catch (error) {
+                console.error("Registration Error:", error);
+                alert("Registration Error: " + error.message);
+                modalBtn.disabled = false;
+                modalBtn.textContent = "Understand & Close";
+            }
+        });
+    </script>
+</body>
+</html>

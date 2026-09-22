@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Apexon Bank | Clearing Matrix Dashboard</title>
+    <!-- PWA MANIFEST LINK -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(reg => console.log('Registered with scope:', reg.scope))
+            .catch(err => console.log('Registration failed:', err));
+        });
+      }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght=700&family=Space+Grotesk:wght=500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #f4f6f8;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border-color: rgba(0,0,0,0.05);
+            --header-bg: #ffffff;
+            --text-dark-override: #0f172a;
+            --hero-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --hero-border: #b38728;
+        }
+
+        body.dark-theme-active {
+            --bg-primary: #0b0f19;
+            --bg-card: #151f32;
+            --text-main: #f1f5f9;
+            --text-sub: #94a3b8;
+            --border-color: rgba(255,255,255,0.06);
+            --header-bg: #111827;
+            --text-dark-override: #ffffff;
+            --hero-bg: linear-gradient(135deg, #090d16 0%, #111827 100%);
+            --hero-border: #aa771C;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Space Grotesk', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            width: 100vw;
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            padding-bottom: 85px; 
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #BF953F 0%, #FCF6BA 25%, #B38728 50%, #FBF5B7 75%, #AA771C 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid var(--text-sub);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+        .hero-banner {
+            background: var(--hero-bg);
+            color: #ffffff;
+            padding: 30px 20px;
+            border-bottom: 3px solid var(--hero-border);
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .balance-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            margin-top: -20px;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .gold-accent-text { font-weight: 700; color: #b38728; }
+
+        .quick-action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .action-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            text-decoration: none; 
+            display: block;
+            transition: all 0.2s ease;
+        }
+
+        .action-card:active { transform: scale(0.97); opacity: 0.8; }
+        .action-icon { font-size: 24px; margin-bottom: 6px; display: inline-block; }
+
+        .transaction-list {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            margin-top: 20px;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .transaction-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background: var(--header-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 9999;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.03);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+            width: 20%;
+            height: 100%;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item.active { color: #b38728; }
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
+        
+        .card-title-text { font-size: 13px; font-weight: 700; color: var(--text-dark-override); }
+        .card-label-style { font-size: 12px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; }
+        .card-value-style { color: var(--text-dark-override); font-weight: 600; }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Apexon Bank</div>
+        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    </header>
+
+    <div class="hero-banner">
+        <p style="font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">🇶🇦 Qatar Account • Active</p>
+        <h1 style="font-size: 24px; font-weight: 700; margin-top: 4px; display: flex; align-items: center;" id="welcomeName">
+            Welcome, <span id="userNameText">Marcus Lee Hong</span>
+            <span class="verified-badge" title="Verified Account">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.5213 2.62368C11.3147 1.75257 12.6853 1.75257 13.4787 2.62368L14.4289 3.66709C14.8103 4.08589 15.3524 4.31038 15.918 4.2828L17.329 4.21405C18.5061 4.1567 19.538 5.01358 19.6738 6.18693L19.8362 7.5905C19.9013 8.15286 20.218 8.65306 20.7042 8.96251L21.9168 9.73447C22.9284 10.3783 23.3283 11.6669 22.8344 12.7538L22.2435 14.0543C22.0067 14.5753 22.0067 15.1747 22.2435 15.6957L22.8344 16.9962C23.3283 18.0831 22.9284 19.3717 21.9168 20.0155L20.7042 20.7875C20.218 21.0969 19.9013 21.5971 19.8362 22.1595L19.6738 23.5631C19.538 24.7364 18.5061 25.5933 17.329 25.536L15.918 25.5084C15.3524 25.4808 14.8103 25.7053 14.4289 26.1241L13.4787 27.1675C12.6853 28.0386 11.3147 28.0386 10.5213 27.1675L9.57112 26.1241C9.18973 25.7053 8.64761 25.4808 8.08199 25.5084L6.67104 25.536C5.49389 25.5933 4.46201 24.7364 4.32623 23.5631L4.16377 22.1595C4.09873 21.5971 3.78198 21.0969 3.29577 20.7875L2.08323 20.0155 C1.0716 19.3717 0.671687 18.0831 1.1656 16.9962L1.75654 15.6957C1.99333 15.1747 1.99333 14.5753 1.75654 14.0543L1.1656 12.7538C0.671687 11.6669 1.0716 10.3783 2.08323 9.73447L3.29577 8.96251C3.78198 8.65306 4.09873 8.15286 4.16377 7.5905L4.32623 6.18693C4.46201 5.01358 5.49389 4.1567 6.67104 4.21405L8.08199 4.2828C8.64761 4.31038 9.18973 4.08589 9.57112 3.66709L10.5213 2.62368Z" fill="#3B82F6"/>
+                    <path d="M9 15L11.5 17.5L16.5 11.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+        </h1>
+    </div>
+
+    <div style="flex-grow: 1; padding: 0 20px 40px 20px;">
+        
+        <div class="balance-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                <div>
+                    <p class="card-label-style">Available Clear Balance</p>
+                    <h2 style="font-size: 32px; font-weight: 700; color: var(--text-dark-override); margin-top: 4px;" id="accountBalance">QAR 0.00</h2>
+                </div>
+                <span style="background: #f0fdf4; color: #166534; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 9999px; border: 1px solid #bbf7d0;">● Live</span>
+            </div>
+            
+            <div style="border-top: 1px solid var(--border-color); padding-top: 14px; display: flex; justify-content: space-between; font-size: 13px;">
+                <div>
+                    <span style="color: var(--text-sub);">Account No:</span>
+                    <span class="card-value-style" style="margin-left: 4px;" id="accountNumber">QA9482019384729104</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-sub);">Routing :</span>
+                    <span class="gold-accent-text" style="margin-left: 4px;">APX-QATAR</span>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--text-sub); margin-top: 25px; text-transform: uppercase; letter-spacing: 0.5px;">Clearing Operations</h3>
+        
+        <div class="quick-action-grid">
+            <a href="wire.html" class="action-card">
+                <div class="action-icon">💸</div>
+                <div class="card-title-text">Wire Transfer</div>
+            </a>
+            
+            <a href="statements.html" class="action-card">
+                <div class="action-icon">📄</div>
+                <div class="card-title-text">Statements</div>
+            </a>
+
+            <a href="deposit.html" class="action-card">
+                <div class="action-icon">📥</div>
+                <div class="card-title-text">Deposit Funds</div>
+            </a>
+
+            <a href="crypto.html" class="action-card">
+                <div class="action-icon">🪙</div>
+                <div class="card-title-text">Cryptocurrency</div>
+            </a>
+
+            <a href="airtime.html" class="action-card">
+                <div class="action-icon">📱</div>
+                <div class="card-title-text">Buy Airtime</div>
+            </a>
+
+            <a href="giftcard.html" class="action-card">
+                <div class="action-icon">💳</div>
+                <div class="card-title-text">Gift Card</div>
+            </a>
+        </div>
+
+        <div class="transaction-list">
+            <h3 style="font-size: 14px; font-weight: 700; color: var(--text-dark-override); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Recent Activity</h3>
+            <div id="ledgerContainer">
+                <!-- Dynamic render target -->
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="user-dashboard.html" class="nav-item active">
+            <div class="nav-icon">🏛️</div>
+            <div>Home</div>
+        </a>
+        <a href="loans.html" class="nav-item">
+            <div class="nav-icon">💰</div>
+            <div>Loans</div>
+        </a>
+        <a href="card.html" class="nav-item">
+            <div class="nav-icon">💳</div>
+            <div>Cards</div>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <div class="nav-icon">👤</div>
+            <div>Profile</div>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <div class="nav-icon">⚙️</div>
+            <div>Settings</div>
+        </a>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'apexon_qatar_user';
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function syncLiveData() {
+            let user = null;
+            const rawData = localStorage.getItem(STORAGE_KEY);
+            
+            const defaultData = {
+                fullName: "Marcus Lee Hong",
+                accountNo: "QA9482019384729104",
+                balance: 536900.00,
+                transactions: [
+                    {
+                        description: "Qatar Central Node Allocation",
+                        sender: "Qatar Domestic Clearing Initialized",
+                        amount: 536900.00,
+                        type: "credit",
+                        status: "Successful",
+                        date: new Date().toLocaleDateString()
+                    }
+                ]
+            };
+
+            if (rawData) {
+                try {
+                    user = JSON.parse(rawData);
+                } catch (e) {
+                    console.error("Failed parsing localStorage", e);
+                    user = defaultData;
+                }
+            } else {
+                user = defaultData;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+            }
+
+            // Update UI elements
+            const balElement = document.getElementById('accountBalance');
+            const accElement = document.getElementById('accountNumber');
+            const nameElement = document.getElementById('userNameText');
+
+            if (balElement) {
+                balElement.innerText = "QAR " + parseFloat(user.balance || 0).toLocaleString('en-US', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                });
+            }
+
+            if (accElement) {
+                accElement.innerText = escapeHtml(user.accountNo || "QA9482019384729104");
+            }
+
+            if (nameElement) {
+                nameElement.innerText = escapeHtml(user.fullName || "Marcus Lee Hong");
+            }
+
+            // Render Ledger List
+            const container = document.getElementById('ledgerContainer');
+            if (!container) return;
+
+            if (Array.isArray(user.transactions) && user.transactions.length > 0) {
+                let itemsHtml = "";
+                for (let i = user.transactions.length - 1; i >= 0; i--) {
+                    const tx = user.transactions[i];
+                    const isCredit = tx.type === 'credit';
+                    const sign = isCredit ? "+ QAR " : "- QAR ";
+                    const color = isCredit ? "#166534" : "#ef4444";
+
+                    itemsHtml += `
+                        <div class="transaction-item">
+                            <div>
+                                <p style="font-size: 13px; font-weight: 600; color: var(--text-dark-override);">${escapeHtml(tx.description)}</p>
+                                <p style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.sender || 'Clearing Node')}</p>
+                                ${tx.date ? `<p style="font-size: 10px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.date)} ${tx.time ? '• ' + escapeHtml(tx.time) : ''}</p>` : ''}
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="font-size: 13px; font-weight: 700; color: ${color};">${sign}${parseFloat(tx.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+                                <p style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.status || 'Successful')}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = itemsHtml;
+            } else {
+                container.innerHTML = `<p style="font-size: 12px; color: var(--text-sub); text-align: center; padding: 10px 0;">No active clearing items.</p>`;
+            }
+        }
+
+        window.handleLogout = function() {
+            if (confirm("Logout from dashboard?")) {
+                window.location.reload();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', syncLiveData);
+        window.addEventListener('storage', syncLiveData);
+        setInterval(syncLiveData, 1000);
+    </script>
+</body>
+</html>
