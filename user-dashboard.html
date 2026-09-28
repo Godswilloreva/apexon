@@ -209,6 +209,93 @@
             margin-left: 6px;
             vertical-align: middle;
         }
+
+        /* CUSTOM APEXON LOGOUT MODAL STYLING */
+        .apexon-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .apexon-modal-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .apexon-modal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-top: 4px solid #b38728;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .apexon-modal-backdrop.active .apexon-modal-card {
+            transform: scale(1);
+        }
+
+        .apexon-modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark-override);
+            margin-bottom: 8px;
+        }
+
+        .apexon-modal-body {
+            font-size: 14px;
+            color: var(--text-sub);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .apexon-modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .apexon-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .apexon-btn-cancel {
+            background: var(--bg-primary);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .apexon-btn-confirm {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        .apexon-btn-confirm:hover {
+            background: #dc2626;
+        }
     </style>
 </head>
 <body>
@@ -319,11 +406,24 @@
         </a>
     </div>
 
+    <!-- CUSTOM APEXON LOGOUT MODAL -->
+    <div class="apexon-modal-backdrop" id="logoutModal">
+        <div class="apexon-modal-card">
+            <div style="font-size: 32px; margin-bottom: 8px;">🔒</div>
+            <div class="apexon-modal-title">Apexon Bank</div>
+            <div class="apexon-modal-body">Are you sure you want to end your current banking session?</div>
+            <div class="apexon-modal-actions">
+                <button class="apexon-btn apexon-btn-cancel" id="cancelLogoutBtn">Cancel</button>
+                <button class="apexon-btn apexon-btn-confirm" id="confirmLogoutBtn">Sign Out</button>
+            </div>
+        </div>
+    </div>
+
     <!-- FIREBASE MODULES & LIVE FIRESTORE SYNC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCrjHf4jXF-12q0Ux9FXuC9qvPbtSybiGg",
@@ -351,15 +451,51 @@
                 .replace(/'/g, "&#039;");
         }
 
+        // Generate unique account number based on user's country
+        function generateUniqueAccountNumber(country) {
+            const countryCodes = {
+                'qatar': 'QAT',
+                'nigeria': 'NGA',
+                'united states': 'USA',
+                'us': 'USA',
+                'united kingdom': 'GBR',
+                'uk': 'GBR',
+                'canada': 'CAN',
+                'uae': 'ARE',
+                'united arab emirates': 'ARE',
+                'germany': 'DEU',
+                'france': 'FRA'
+            };
+
+            const cleanCountry = (country || 'qatar').trim().toLowerCase();
+            const prefix = countryCodes[cleanCountry] || cleanCountry.substring(0, 3).toUpperCase();
+            
+            // Generate a random 10-digit account number
+            const randomDigits = Math.floor(1000000000 + Math.random() * 9000000000);
+            return `${prefix}-${randomDigits}`;
+        }
+
         // Authenticate User State
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 // Realtime Listener for the authenticated user document in Firestore
                 const userDocRef = doc(db, "users", user.uid);
                 
-                unsubscribeUserDoc = onSnapshot(userDocRef, (snapshot) => {
+                unsubscribeUserDoc = onSnapshot(userDocRef, async (snapshot) => {
                     if (snapshot.exists()) {
                         const userData = snapshot.data();
+                        
+                        // Check if user needs an account number generated
+                        if (!userData.accountNo || userData.accountNo === "--------------" || userData.accountNo === "N/A") {
+                            const newAccountNo = generateUniqueAccountNumber(userData.country);
+                            try {
+                                await updateDoc(userDocRef, { accountNo: newAccountNo });
+                                userData.accountNo = newAccountNo;
+                            } catch (e) {
+                                console.error("Error updating account number:", e);
+                            }
+                        }
+
                         renderDashboard(userData);
                     } else {
                         console.error("User document does not exist in Firestore.");
@@ -379,6 +515,7 @@
             const accountBalance = document.getElementById('accountBalance');
             const accountNumber = document.getElementById('accountNumber');
             const accountCountryTag = document.getElementById('accountCountryTag');
+            const routingText = document.getElementById('routingText');
             const ledgerContainer = document.getElementById('ledgerContainer');
 
             const currency = data.currency || 'QAR';
@@ -387,6 +524,7 @@
             if (userNameText) userNameText.innerText = escapeHtml(data.fullName || "Valued Customer");
             if (accountCountryTag) accountCountryTag.innerText = `ACCOUNT • ${country.toUpperCase()} • ACTIVE`;
             if (accountNumber) accountNumber.innerText = escapeHtml(data.accountNo || "N/A");
+            if (routingText) routingText.innerText = `APX-${country.substring(0, 5).toUpperCase()}`;
 
             if (accountBalance) {
                 const bal = parseFloat(data.balance || 0);
@@ -425,16 +563,27 @@
             }
         }
 
-        // Logout action
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            if (confirm("Logout from dashboard?")) {
-                if (unsubscribeUserDoc) unsubscribeUserDoc();
-                signOut(auth).then(() => {
-                    window.location.href = "login.html";
-                }).catch((err) => {
-                    console.error("Logout error:", err);
-                });
-            }
+        // Apexon Custom Modal Logout Logic
+        const logoutModal = document.getElementById('logoutModal');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+        const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+
+        logoutBtn.addEventListener('click', () => {
+            logoutModal.classList.add('active');
+        });
+
+        cancelLogoutBtn.addEventListener('click', () => {
+            logoutModal.classList.remove('active');
+        });
+
+        confirmLogoutBtn.addEventListener('click', () => {
+            if (unsubscribeUserDoc) unsubscribeUserDoc();
+            signOut(auth).then(() => {
+                window.location.href = "login.html";
+            }).catch((err) => {
+                console.error("Logout error:", err);
+            });
         });
     </script>
 </body>
