@@ -363,7 +363,7 @@
         <div class="hero-meta">
             <div>
                 <p class="hero-label">Available Vault Balance</p>
-                <h2 class="hero-val" id="liveBalanceDisplay">Syncing Firebase...</h2>
+                <h2 class="hero-val" id="liveBalanceDisplay">Syncing...</h2>
             </div>
             <div style="text-align: right;">
                 <p class="hero-label">Network</p>
@@ -413,7 +413,7 @@
             <div class="form-section-title" style="margin-top: 24px;">Payment Parameters</div>
 
             <div class="input-group">
-                <label>💰 Transfer Amount (<span id="currencySymbol">QAR</span>)</label>
+                <label>💰 Transfer Amount (<span class="currencySymbol">QAR</span>)</label>
                 <input type="number" step="0.01" id="transferAmount" placeholder="0.00" required>
                 <div class="error-msg" id="balanceError">⚠️ Transfer amount exceeds available clearing funds</div>
             </div>
@@ -440,7 +440,7 @@
             <div style="font-size: 48px; margin-bottom: 14px;" id="modalIcon">⏳</div>
             <h2 style="font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;" id="modalTitle">Processing Request</h2>
             <p style="font-size: 14px; color: var(--text-sub); line-height: 1.5; margin-bottom: 16px;" id="modalBody">
-                Connecting to secure Qatar Central Node...
+                Connecting to secure backend node...
             </p>
 
             <div class="btn-stack" id="modalActions" style="display: none;">
@@ -450,13 +450,13 @@
         </div>
     </div>
 
-    <!-- Firebase SDK Modular Import -->
+    <!-- Firebase Modular Imports & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ⚠️ Replace this with your actual Firebase project config credentials
+        // ⚠️ Place your actual Firebase project config here
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -470,55 +470,66 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let activeUserDocRef = null;
-        let currentUserData = null;
+        window.activeUserDocRef = null;
+        window.currentUserData = null;
 
-        // Sync and listen to user's Firebase record in real-time
+        // Function to dynamically update currency and balance labels on the page
+        function updateUI(data) {
+            const currency = data.currency || data.userCurrency || "QAR";
+            const rawBalance = data.balance !== undefined ? data.balance : 0;
+            const balance = parseFloat(rawBalance);
+
+            // Update all elements matching class 'currencySymbol' or ID
+            const currencyElements = document.querySelectorAll('.currencySymbol');
+            currencyElements.forEach(el => el.innerText = currency);
+
+            const singleCurrencyEl = document.getElementById('currencySymbol');
+            if (singleCurrencyEl) singleCurrencyEl.innerText = currency;
+
+            // Format numerical balance
+            const formattedBalance = balance.toLocaleString('en-US', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+
+            document.getElementById('liveBalanceDisplay').innerText = `${currency} ${formattedBalance}`;
+        }
+
+        // Listen for authentication changes & real-time document snapshots
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                const userId = user.uid;
-                activeUserDocRef = doc(db, "users", userId);
-
-                // Real-time Firebase Listener
-                onSnapshot(activeUserDocRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        currentUserData = docSnap.data();
-                        updateUI(currentUserData);
-                    } else {
-                        console.error("User document not found in Firebase.");
-                    }
-                });
+                window.activeUserDocRef = doc(db, "users", user.uid);
+                listenToUserData(window.activeUserDocRef);
             } else {
-                // If using localStorage session key fallback
                 const storedUid = localStorage.getItem("firebase_user_uid");
                 if (storedUid) {
-                    activeUserDocRef = doc(db, "users", storedUid);
-                    onSnapshot(activeUserDocRef, (docSnap) => {
-                        if (docSnap.exists()) {
-                            currentUserData = docSnap.data();
-                            updateUI(currentUserData);
-                        }
-                    });
+                    window.activeUserDocRef = doc(db, "users", storedUid);
+                    listenToUserData(window.activeUserDocRef);
                 } else {
                     document.getElementById('liveBalanceDisplay').innerText = "QAR 0.00";
                 }
             }
         });
 
-        function updateUI(data) {
-            const currency = data.currency || "QAR";
-            const balance = parseFloat(data.balance || 0);
-
-            document.getElementById('currencySymbol').innerText = currency;
-            document.getElementById('liveBalanceDisplay').innerText = currency + " " + balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        function listenToUserData(docRef) {
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    window.currentUserData = docSnap.data();
+                    updateUI(window.currentUserData);
+                } else {
+                    console.error("User record not found in database.");
+                }
+            }, (error) => {
+                console.error("Firestore reader error:", error);
+            });
         }
 
-        // Handle Transfer Submission with Firebase Update
+        // Form Submit Event Handler
         document.getElementById('wireTransferForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            if (!activeUserDocRef || !currentUserData) {
-                alert("Firebase user data is not loaded yet. Please wait or refresh.");
+            if (!window.activeUserDocRef || !window.currentUserData) {
+                alert("Account data is still synchronizing. Please try again in a moment.");
                 return;
             }
 
@@ -532,7 +543,8 @@
 
             balanceError.style.display = 'none';
 
-            const currentBalance = parseFloat(currentUserData.balance || 0);
+            const currentBalance = parseFloat(window.currentUserData.balance || 0);
+            const activeCurrency = window.currentUserData.currency || window.currentUserData.userCurrency || "QAR";
 
             if (amountInp > currentBalance || amountInp <= 0 || isNaN(amountInp)) {
                 balanceError.style.display = 'block';
@@ -549,7 +561,7 @@
 
             modalIcon.innerText = "⏳";
             modalTitle.innerText = "Processing Request";
-            modalBody.innerText = "Connecting to secure Firebase Node...";
+            modalBody.innerText = "Authorizing transaction against secure gateway...";
             modalActions.style.display = "none";
             modal.classList.add('active');
 
@@ -570,6 +582,7 @@
                         beneficiaryAccount: accountInp,
                         bankName: bankInp,
                         amount: amountInp,
+                        currency: activeCurrency,
                         type: "debit",
                         status: "Completed",
                         channel: "Apexon Internal Network",
@@ -581,6 +594,7 @@
                     const bonusTx = {
                         description: "Internal Transfer Bonus Reward",
                         amount: bonusAmount,
+                        currency: activeCurrency,
                         type: "credit",
                         status: "Completed",
                         channel: "Apexon Rewards",
@@ -589,15 +603,14 @@
                         time: timeStr
                     };
 
-                    // Sync changes directly to Firebase
-                    await updateDoc(activeUserDocRef, {
+                    await updateDoc(window.activeUserDocRef, {
                         balance: newBalance,
                         transactions: arrayUnion(debitTx, bonusTx)
                     });
 
                     modalIcon.innerText = "✅";
                     modalTitle.innerText = "Transfer Successful";
-                    modalBody.innerHTML = "Outbound transfer of <strong>" + currentUserData.currency + " " + amountInp.toFixed(2) + "</strong> sent successfully to <strong>" + nameInp + "</strong>.<br><br>🎉 <strong>Bonus Earned:</strong> " + currentUserData.currency + " " + bonusAmount.toFixed(2) + " credited to your balance.";
+                    modalBody.innerHTML = `Outbound transfer of <strong>${activeCurrency} ${amountInp.toFixed(2)}</strong> sent successfully to <strong>${nameInp}</strong>.<br><br>🎉 <strong>Bonus Earned:</strong> ${activeCurrency} ${bonusAmount.toFixed(2)} credited to your account.`;
 
                     modalPrimaryBtn.innerText = "Done";
                     modalPrimaryBtn.onclick = function() {
@@ -608,10 +621,10 @@
                     modalActions.style.display = "flex";
 
                 } else {
-                    if (!currentUserData.isExternalVerified) {
+                    if (!window.currentUserData.isExternalVerified) {
                         modalIcon.innerText = "🛡️";
                         modalTitle.innerText = "Verification Required";
-                        modalBody.innerText = "First-time external wire transfers require live identity verification before clearing. Please chat with our live customer support to complete verification.";
+                        modalBody.innerText = "First-time external wire transfers require live identity verification before clearing. Please chat with live customer support to proceed.";
 
                         modalPrimaryBtn.innerText = "💬 Start Live Verification";
                         modalPrimaryBtn.onclick = function() {
@@ -636,6 +649,7 @@
                             bankName: bankInp,
                             routingCode: routingInp,
                             amount: amountInp,
+                            currency: activeCurrency,
                             type: "debit",
                             status: "Pending Approval",
                             channel: "External Wire",
@@ -644,13 +658,13 @@
                             time: timeStr
                         };
 
-                        await updateDoc(activeUserDocRef, {
+                        await updateDoc(window.activeUserDocRef, {
                             transactions: arrayUnion(externalTx)
                         });
 
                         modalIcon.innerText = "💼";
                         modalTitle.innerText = "Transfer Awaiting Release";
-                        modalBody.innerHTML = "Outbound transfer of <strong>" + currentUserData.currency + " " + amountInp.toFixed(2) + "</strong> submitted successfully.<br><br><strong>Status:</strong> Pending Approval";
+                        modalBody.innerHTML = `Outbound transfer of <strong>${activeCurrency} ${amountInp.toFixed(2)}</strong> submitted successfully.<br><br><strong>Status:</strong> Pending Approval`;
 
                         modalPrimaryBtn.innerText = "Close Notification";
                         modalPrimaryBtn.onclick = function() {
