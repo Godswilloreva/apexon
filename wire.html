@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Apexon Bank | Wire Transfer Gateway</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .catch(err => console.log('Registration failed:', err));
+        });
+      }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght=700&family=Space+Grotesk:wght=400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Start of Tawk.to Script -->
+    <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/6aba88484f795a343b370ead/default';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!-- End of Tawk.to Script -->
+
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --border-color: #e2e8f0;
+            --header-bg: rgba(255, 255, 255, 0.85);
+            --input-border: #cbd5e1;
+            --input-bg: #f8fafc;
+            --tab-bg: #f1f5f9;
+            --tab-active: #ffffff;
+            --hero-bg: linear-gradient(135deg, #0b1329 0%, #1a233a 100%);
+            --accent-gold: #b38728;
+            --accent-gold-light: rgba(179, 135, 40, 0.12);
+            --gold-gradient: linear-gradient(135deg, #BF953F 0%, #FCF6BA 25%, #B38728 50%, #FBF5B7 75%, #AA771C 100%);
+            --success-green: #10b981;
+            --error-red: #ef4444;
+        }
+
+        body.dark-theme-active {
+            --bg-primary: #070a12;
+            --bg-card: #0f172a;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border-color: #1e293b;
+            --header-bg: rgba(15, 23, 42, 0.85);
+            --input-border: #334155;
+            --input-bg: #070a12;
+            --tab-bg: #1e293b;
+            --tab-active: #0f172a;
+            --hero-bg: linear-gradient(135deg, #030712 0%, #0f172a 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding-bottom: 90px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background-color: var(--header-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--tab-bg);
+            color: var(--accent-gold);
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size: 19px;
+            font-weight: 700;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .balance-hero {
+            background: var(--hero-bg);
+            color: #ffffff;
+            padding: 24px 20px;
+            border-bottom: 2px solid var(--accent-gold);
+            position: relative;
+        }
+
+        .hero-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .hero-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .hero-val {
+            font-size: 26px;
+            font-weight: 700;
+            margin-top: 4px;
+            color: #ffffff;
+        }
+
+        .channel-tag {
+            background: rgba(179, 135, 40, 0.15);
+            color: #FCF6BA;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(179, 135, 40, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .channel-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--success-green);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .page-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .route-tabs {
+            display: flex;
+            background: var(--tab-bg);
+            padding: 4px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .route-tab {
+            flex: 1;
+            text-align: center;
+            padding: 11px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-sub);
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        .route-tab.active {
+            background: var(--tab-active);
+            color: var(--text-main);
+        }
+
+        .form-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-sub);
+            text-transform: uppercase;
+        }
+
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            font-size: 14px;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        .error-msg {
+            font-size: 12px;
+            color: var(--error-red);
+            margin-top: 4px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--hero-bg);
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 68px;
+            background: var(--header-bg);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(11, 15, 25, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 99999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            padding: 32px 24px;
+            text-align: center;
+            border: 2px solid var(--accent-gold);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .btn-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: var(--gold-gradient);
+            color: #0b1329;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .modal-btn-secondary {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--text-sub);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="user-dashboard.html" class="back-btn">←</a>
+        <div class="logo">Apexon Bank</div>
+        <div style="width: 36px;"></div>
+    </header>
+
+    <div class="balance-hero">
+        <div class="hero-meta">
+            <div>
+                <p class="hero-label">Available Vault Balance</p>
+                <h2 class="hero-val" id="liveBalanceDisplay">QAR 536,900.00</h2>
+            </div>
+            <div style="text-align: right;">
+                <p class="hero-label">Network</p>
+                <span class="channel-tag" id="channelIndicator">
+                    <span class="channel-dot"></span> Qatar Node
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-container">
+        
+        <div class="route-tabs">
+            <div class="route-tab active" id="tabLocal" onclick="switchRoute('local')">Domestic Wire</div>
+            <div class="route-tab" id="tabInter" onclick="switchRoute('international')">Inter-Continental</div>
+        </div>
+
+        <form id="wireTransferForm" class="form-card">
+            
+            <div class="form-section-title">Beneficiary Details</div>
+
+            <div class="input-group">
+                <label>👤 Beneficiary Name</label>
+                <input type="text" id="beneficiaryName" placeholder="Exact destination account name" required>
+            </div>
+
+            <div class="input-group">
+                <label id="accountNumberLabel">🔢 Account Number</label>
+                <input type="text" id="beneficiaryAccount" placeholder="Enter ledger account number" required>
+            </div>
+
+            <div class="input-group">
+                <label>🏢 Destination Bank</label>
+                <input type="text" id="bankName" placeholder="e.g. Apexon Bank, QNB, Chase, Barclays" required>
+            </div>
+
+            <div class="input-group" id="routingGroup">
+                <label id="routingLabel">📌 Routing Transit / APX Code</label>
+                <input type="text" id="routingValue" placeholder="Enter routing code" required>
+            </div>
+
+            <div class="input-group" id="countryGroup" style="display: none;">
+                <label>🌍 Destination Country</label>
+                <select id="destinationCountry">
+                    <option value="" disabled selected>Select Destination Country</option>
+                </select>
+            </div>
+
+            <div class="form-section-title" style="margin-top: 24px;">Payment Parameters</div>
+
+            <div class="input-group">
+                <label>💰 Transfer Amount (<span id="currencySymbol">QAR</span>)</label>
+                <input type="number" step="0.01" id="transferAmount" placeholder="0.00" required>
+                <div class="error-msg" id="balanceError">⚠️ Transfer amount exceeds available clearing funds</div>
+            </div>
+
+            <div class="input-group">
+                <label>📝 Reference / Narration</label>
+                <textarea id="narration" rows="2" placeholder="Purpose of transaction (Optional)"></textarea>
+            </div>
+
+            <button type="submit" class="action-btn">Authorize Wire Transfer</button>
+        </form>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="user-dashboard.html" class="nav-item">
+            <div style="font-size: 20px;">🏛️</div>
+            <div>Home</div>
+        </a>
+        <a href="loans.html" class="nav-item">
+            <div style="font-size: 20px;">💰</div>
+            <div>Loans</div>
+        </a>
+        <a href="card.html" class="nav-item">
+            <div style="font-size: 20px;">💳</div>
+            <div>Cards</div>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <div style="font-size: 20px;">👤</div>
+            <div>Profile</div>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <div style="font-size: 20px;">⚙️</div>
+            <div>Settings</div>
+        </a>
+    </div>
+
+    <div class="modal-overlay" id="transferModal">
+        <div class="modal-card">
+            <div style="font-size: 48px; margin-bottom: 14px;" id="modalIcon">⏳</div>
+            <h2 style="font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;" id="modalTitle">Processing Request</h2>
+            <p style="font-size: 14px; color: var(--text-sub); line-height: 1.5; margin-bottom: 16px;" id="modalBody">
+                Connecting to secure Qatar Central Node...
+            </p>
+
+            <div class="btn-stack" id="modalActions" style="display: none;">
+                <button class="modal-btn-primary" id="modalPrimaryBtn">Action</button>
+                <button class="modal-btn-secondary" id="modalCloseBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    var activeRoute = 'local';
+    var STORAGE_KEY = 'apexon_qatar_user';
+    var globalCountries = ["Qatar", "Mexico", "Venezuela", "Colombia", "Ecuador", "United Kingdom", "United States", "United Arab Emirates", "Canada", "Germany", "France", "Saudi Arabia", "Kuwait", "Oman", "Bahrain", "India", "China"];
+
+    function getStoreUser() {
+        var rawData = localStorage.getItem(STORAGE_KEY);
+        var defaultData = {
+            fullName: "Marcus Lee Hong",
+            username: "marcus_lee",
+            accountNo: "QA9482019384729104",
+            balance: 536900.00,
+            currency: "QAR",
+            isExternalVerified: false,
+            transactions: []
+        };
+
+        if (rawData) {
+            try {
+                return JSON.parse(rawData);
+            } catch (e) {
+                return defaultData;
+            }
+        } else {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+            return defaultData;
+        }
+    }
+
+    function fetchDashboardBalance() {
+        var user = getStoreUser();
+        return {
+            fullName: user.fullName || "Marcus Lee Hong",
+            balance: parseFloat(user.balance || 0),
+            currency: user.currency || "QAR"
+        };
+    }
+
+    function initWireGateway() {
+        var userData = fetchDashboardBalance();
+        var symbol = userData.currency;
+        document.getElementById('currencySymbol').innerText = symbol;
+        
+        var currentBal = parseFloat(userData.balance);
+        var formattedBal = symbol + " " + currentBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('liveBalanceDisplay').innerText = formattedBal;
+
+        var countryDropdown = document.getElementById('destinationCountry');
+        if(countryDropdown && countryDropdown.options.length <= 1) {
+            globalCountries.forEach(function(c) {
+                var o = document.createElement("option");
+                o.value = c;
+                o.textContent = c;
+                countryDropdown.appendChild(o);
+            });
+        }
+    }
+
+    function switchRoute(type) {
+        activeRoute = type;
+        var tabLocal = document.getElementById('tabLocal');
+        var tabInter = document.getElementById('tabInter');
+        var routingLabel = document.getElementById('routingLabel');
+        var routingValue = document.getElementById('routingValue');
+        var countryGroup = document.getElementById('countryGroup');
+        var channelIndicator = document.getElementById('channelIndicator');
+
+        if (type === 'local') {
+            tabLocal.classList.add('active');
+            tabInter.classList.remove('active');
+            routingLabel.innerText = "📌 Routing Transit / APX Code";
+            routingValue.placeholder = "Enter APX-QATAR routing code";
+            countryGroup.style.display = 'none';
+            channelIndicator.innerHTML = '<span class="channel-dot"></span> Qatar Node';
+        } else {
+            tabInter.classList.add('active');
+            tabLocal.classList.remove('active');
+            routingLabel.innerText = "📌 SWIFT / BIC Network Code";
+            routingValue.placeholder = "Enter 8 or 11 alphanumeric SWIFT code";
+            countryGroup.style.display = 'flex';
+            channelIndicator.innerHTML = '<span class="channel-dot"></span> SWIFT Node';
+        }
+    }
+
+    function openLiveSupport() {
+        document.getElementById('transferModal').classList.remove('active');
+        if (typeof Tawk_API !== 'undefined' && Tawk_API.maximize) {
+            Tawk_API.maximize();
+        } else {
+            alert("Customer support widget is loading. Please click the chat bubble on the bottom right.");
+        }
+    }
+
+    document.getElementById('wireTransferForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        var nameInp = document.getElementById('beneficiaryName').value.trim();
+        var accountInp = document.getElementById('beneficiaryAccount').value.trim();
+        var bankInp = document.getElementById('bankName').value.trim();
+        var routingInp = document.getElementById('routingValue').value.trim();
+        var amountInp = parseFloat(document.getElementById('transferAmount').value);
+        var narrationInp = document.getElementById('narration').value.trim();
+        var balanceError = document.getElementById('balanceError');
+        
+        balanceError.style.display = 'none';
+
+        var user = getStoreUser();
+        var currentBalance = parseFloat(user.balance || 0);
+
+        if (amountInp > currentBalance || amountInp <= 0 || isNaN(amountInp)) {
+            balanceError.style.display = 'block';
+            return;
+        }
+
+        var modal = document.getElementById('transferModal');
+        var modalIcon = document.getElementById('modalIcon');
+        var modalTitle = document.getElementById('modalTitle');
+        var modalBody = document.getElementById('modalBody');
+        var modalActions = document.getElementById('modalActions');
+        var modalPrimaryBtn = document.getElementById('modalPrimaryBtn');
+        var modalCloseBtn = document.getElementById('modalCloseBtn');
+
+        modalIcon.innerText = "⏳";
+        modalTitle.innerText = "Processing Request";
+        modalBody.innerText = "Connecting to secure Qatar Central Node...";
+        modalActions.style.display = "none";
+        modal.classList.add('active');
+
+        var isInternal = bankInp.toLowerCase().includes("apexon");
+
+        setTimeout(function() {
+            if (isInternal) {
+                // INTRA-BANK TRANSFER: Execute Immediately + Add Bonus
+                var bonusAmount = 1.00;
+                user.balance = (currentBalance - amountInp) + bonusAmount;
+
+                var now = new Date();
+                var dateStr = now.toLocaleDateString();
+                var timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                // Add Outbound Debit
+                user.transactions.unshift({
+                    description: "Apexon Intra-Transfer: " + nameInp,
+                    receiver: nameInp,
+                    beneficiaryAccount: accountInp,
+                    bankName: bankInp,
+                    amount: amountInp,
+                    type: "debit",
+                    status: "Completed",
+                    channel: "Apexon Internal Network",
+                    narration: narrationInp || "Internal Instant Transfer",
+                    date: dateStr,
+                    time: timeStr
+                });
+
+                // Add Bonus Credit
+                user.transactions.unshift({
+                    description: "Internal Transfer Bonus Reward",
+                    amount: bonusAmount,
+                    type: "credit",
+                    status: "Completed",
+                    channel: "Apexon Rewards",
+                    narration: "Bonus credit for using internal Apexon gateway",
+                    date: dateStr,
+                    time: timeStr
+                });
+
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+                initWireGateway();
+
+                modalIcon.innerText = "✅";
+                modalTitle.innerText = "Transfer Successful";
+                modalBody.innerHTML = "Outbound transfer of <strong>" + user.currency + " " + amountInp.toFixed(2) + "</strong> sent successfully to <strong>" + nameInp + "</strong>.<br><br>🎉 <strong>Bonus Earned:</strong> " + user.currency + " " + bonusAmount.toFixed(2) + " credited to your balance for using Apexon Internal Gateway.";
+
+                modalPrimaryBtn.innerText = "Done";
+                modalPrimaryBtn.onclick = function() {
+                    modal.classList.remove('active');
+                    document.getElementById('wireTransferForm').reset();
+                };
+                modalCloseBtn.style.display = "none";
+                modalActions.style.display = "flex";
+
+            } else {
+                // EXTERNAL BANK TRANSFER: Check First-Time Live Chat Security
+                if (!user.isExternalVerified) {
+                    modalIcon.innerText = "🛡️";
+                    modalTitle.innerText = "Verification Required";
+                    modalBody.innerText = "First-time external wire transfers require live identity verification before clearing. Please kindly chat with our live customer support to complete verification.";
+
+                    modalPrimaryBtn.innerText = "💬 Start Live Verification";
+                    modalPrimaryBtn.onclick = openLiveSupport;
+
+                    modalCloseBtn.innerText = "Cancel";
+                    modalCloseBtn.style.display = "block";
+                    modalCloseBtn.onclick = function() {
+                        modal.classList.remove('active');
+                    };
+                    modalActions.style.display = "flex";
+
+                } else {
+                    // VERIFIED EXTERNAL TRANSFER
+                    var now = new Date();
+                    user.transactions.unshift({
+                        description: "Wire Transfer: " + nameInp,
+                        receiver: nameInp,
+                        beneficiaryAccount: accountInp,
+                        bankName: bankInp,
+                        routingCode: routingInp,
+                        amount: amountInp,
+                        type: "debit",
+                        status: "Pending Approval",
+                        channel: activeRoute === 'local' ? "Domestic Wire" : "Inter-Continental Wire",
+                        narration: narrationInp || "Outbound Wire Settlement",
+                        date: now.toLocaleDateString(),
+                        time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    });
+
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+
+                    modalIcon.innerText = "💼";
+                    modalTitle.innerText = "Transfer Awaiting Release";
+                    modalBody.innerHTML = "Outbound transfer of <strong>" + user.currency + " " + amountInp.toFixed(2) + "</strong> submitted successfully.<br><br><strong>Status:</strong> Pending Approval<br><strong>Ref:</strong> TXN-" + Math.floor(Math.random()*899999+100000);
+
+                    modalPrimaryBtn.innerText = "Close Notification";
+                    modalPrimaryBtn.onclick = function() {
+                        modal.classList.remove('active');
+                        document.getElementById('wireTransferForm').reset();
+                    };
+                    modalCloseBtn.style.display = "none";
+                    modalActions.style.display = "flex";
+                }
+            }
+        }, 1500);
+    });
+
+    initWireGateway();
+    </script>
+</body>
+</html>
