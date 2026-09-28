@@ -9,15 +9,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .catch(err => console.log('Registration failed:', err));
-        });
-      }
-    </script>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght=700&family=Space+Grotesk:wght=400;500;600;700&display=swap" rel="stylesheet">
@@ -372,7 +363,7 @@
         <div class="hero-meta">
             <div>
                 <p class="hero-label">Available Vault Balance</p>
-                <h2 class="hero-val" id="liveBalanceDisplay">QAR 536,900.00</h2>
+                <h2 class="hero-val" id="liveBalanceDisplay">Syncing Firebase...</h2>
             </div>
             <div style="text-align: right;">
                 <p class="hero-label">Network</p>
@@ -384,14 +375,12 @@
     </div>
 
     <div class="page-container">
-        
         <div class="route-tabs">
             <div class="route-tab active" id="tabLocal" onclick="switchRoute('local')">Domestic Wire</div>
             <div class="route-tab" id="tabInter" onclick="switchRoute('international')">Inter-Continental</div>
         </div>
 
         <form id="wireTransferForm" class="form-card">
-            
             <div class="form-section-title">Beneficiary Details</div>
 
             <div class="input-group">
@@ -439,26 +428,11 @@
     </div>
 
     <div class="bottom-nav">
-        <a href="user-dashboard.html" class="nav-item">
-            <div style="font-size: 20px;">🏛️</div>
-            <div>Home</div>
-        </a>
-        <a href="loans.html" class="nav-item">
-            <div style="font-size: 20px;">💰</div>
-            <div>Loans</div>
-        </a>
-        <a href="card.html" class="nav-item">
-            <div style="font-size: 20px;">💳</div>
-            <div>Cards</div>
-        </a>
-        <a href="profile.html" class="nav-item">
-            <div style="font-size: 20px;">👤</div>
-            <div>Profile</div>
-        </a>
-        <a href="settings.html" class="nav-item">
-            <div style="font-size: 20px;">⚙️</div>
-            <div>Settings</div>
-        </a>
+        <a href="user-dashboard.html" class="nav-item"><div style="font-size: 20px;">🏛️</div><div>Home</div></a>
+        <a href="loans.html" class="nav-item"><div style="font-size: 20px;">💰</div><div>Loans</div></a>
+        <a href="card.html" class="nav-item"><div style="font-size: 20px;">💳</div><div>Cards</div></a>
+        <a href="profile.html" class="nav-item"><div style="font-size: 20px;">👤</div><div>Profile</div></a>
+        <a href="settings.html" class="nav-item"><div style="font-size: 20px;">⚙️</div><div>Settings</div></a>
     </div>
 
     <div class="modal-overlay" id="transferModal">
@@ -476,66 +450,225 @@
         </div>
     </div>
 
+    <!-- Firebase SDK Modular Import -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // ⚠️ Replace this with your actual Firebase project config credentials
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let activeUserDocRef = null;
+        let currentUserData = null;
+
+        // Sync and listen to user's Firebase record in real-time
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const userId = user.uid;
+                activeUserDocRef = doc(db, "users", userId);
+
+                // Real-time Firebase Listener
+                onSnapshot(activeUserDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        currentUserData = docSnap.data();
+                        updateUI(currentUserData);
+                    } else {
+                        console.error("User document not found in Firebase.");
+                    }
+                });
+            } else {
+                // If using localStorage session key fallback
+                const storedUid = localStorage.getItem("firebase_user_uid");
+                if (storedUid) {
+                    activeUserDocRef = doc(db, "users", storedUid);
+                    onSnapshot(activeUserDocRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            currentUserData = docSnap.data();
+                            updateUI(currentUserData);
+                        }
+                    });
+                } else {
+                    document.getElementById('liveBalanceDisplay').innerText = "QAR 0.00";
+                }
+            }
+        });
+
+        function updateUI(data) {
+            const currency = data.currency || "QAR";
+            const balance = parseFloat(data.balance || 0);
+
+            document.getElementById('currencySymbol').innerText = currency;
+            document.getElementById('liveBalanceDisplay').innerText = currency + " " + balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Handle Transfer Submission with Firebase Update
+        document.getElementById('wireTransferForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!activeUserDocRef || !currentUserData) {
+                alert("Firebase user data is not loaded yet. Please wait or refresh.");
+                return;
+            }
+
+            const nameInp = document.getElementById('beneficiaryName').value.trim();
+            const accountInp = document.getElementById('beneficiaryAccount').value.trim();
+            const bankInp = document.getElementById('bankName').value.trim();
+            const routingInp = document.getElementById('routingValue').value.trim();
+            const amountInp = parseFloat(document.getElementById('transferAmount').value);
+            const narrationInp = document.getElementById('narration').value.trim();
+            const balanceError = document.getElementById('balanceError');
+
+            balanceError.style.display = 'none';
+
+            const currentBalance = parseFloat(currentUserData.balance || 0);
+
+            if (amountInp > currentBalance || amountInp <= 0 || isNaN(amountInp)) {
+                balanceError.style.display = 'block';
+                return;
+            }
+
+            const modal = document.getElementById('transferModal');
+            const modalIcon = document.getElementById('modalIcon');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const modalActions = document.getElementById('modalActions');
+            const modalPrimaryBtn = document.getElementById('modalPrimaryBtn');
+            const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+            modalIcon.innerText = "⏳";
+            modalTitle.innerText = "Processing Request";
+            modalBody.innerText = "Connecting to secure Firebase Node...";
+            modalActions.style.display = "none";
+            modal.classList.add('active');
+
+            const isInternal = bankInp.toLowerCase().includes("apexon");
+
+            setTimeout(async function() {
+                const now = new Date();
+                const dateStr = now.toLocaleDateString();
+                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                if (isInternal) {
+                    const bonusAmount = 1.00;
+                    const newBalance = (currentBalance - amountInp) + bonusAmount;
+
+                    const debitTx = {
+                        description: "Apexon Intra-Transfer: " + nameInp,
+                        receiver: nameInp,
+                        beneficiaryAccount: accountInp,
+                        bankName: bankInp,
+                        amount: amountInp,
+                        type: "debit",
+                        status: "Completed",
+                        channel: "Apexon Internal Network",
+                        narration: narrationInp || "Internal Instant Transfer",
+                        date: dateStr,
+                        time: timeStr
+                    };
+
+                    const bonusTx = {
+                        description: "Internal Transfer Bonus Reward",
+                        amount: bonusAmount,
+                        type: "credit",
+                        status: "Completed",
+                        channel: "Apexon Rewards",
+                        narration: "Bonus credit for using internal Apexon gateway",
+                        date: dateStr,
+                        time: timeStr
+                    };
+
+                    // Sync changes directly to Firebase
+                    await updateDoc(activeUserDocRef, {
+                        balance: newBalance,
+                        transactions: arrayUnion(debitTx, bonusTx)
+                    });
+
+                    modalIcon.innerText = "✅";
+                    modalTitle.innerText = "Transfer Successful";
+                    modalBody.innerHTML = "Outbound transfer of <strong>" + currentUserData.currency + " " + amountInp.toFixed(2) + "</strong> sent successfully to <strong>" + nameInp + "</strong>.<br><br>🎉 <strong>Bonus Earned:</strong> " + currentUserData.currency + " " + bonusAmount.toFixed(2) + " credited to your balance.";
+
+                    modalPrimaryBtn.innerText = "Done";
+                    modalPrimaryBtn.onclick = function() {
+                        modal.classList.remove('active');
+                        document.getElementById('wireTransferForm').reset();
+                    };
+                    modalCloseBtn.style.display = "none";
+                    modalActions.style.display = "flex";
+
+                } else {
+                    if (!currentUserData.isExternalVerified) {
+                        modalIcon.innerText = "🛡️";
+                        modalTitle.innerText = "Verification Required";
+                        modalBody.innerText = "First-time external wire transfers require live identity verification before clearing. Please chat with our live customer support to complete verification.";
+
+                        modalPrimaryBtn.innerText = "💬 Start Live Verification";
+                        modalPrimaryBtn.onclick = function() {
+                            modal.classList.remove('active');
+                            if (typeof Tawk_API !== 'undefined' && Tawk_API.maximize) {
+                                Tawk_API.maximize();
+                            }
+                        };
+
+                        modalCloseBtn.innerText = "Cancel";
+                        modalCloseBtn.style.display = "block";
+                        modalCloseBtn.onclick = function() {
+                            modal.classList.remove('active');
+                        };
+                        modalActions.style.display = "flex";
+
+                    } else {
+                        const externalTx = {
+                            description: "Wire Transfer: " + nameInp,
+                            receiver: nameInp,
+                            beneficiaryAccount: accountInp,
+                            bankName: bankInp,
+                            routingCode: routingInp,
+                            amount: amountInp,
+                            type: "debit",
+                            status: "Pending Approval",
+                            channel: "External Wire",
+                            narration: narrationInp || "Outbound Wire Settlement",
+                            date: dateStr,
+                            time: timeStr
+                        };
+
+                        await updateDoc(activeUserDocRef, {
+                            transactions: arrayUnion(externalTx)
+                        });
+
+                        modalIcon.innerText = "💼";
+                        modalTitle.innerText = "Transfer Awaiting Release";
+                        modalBody.innerHTML = "Outbound transfer of <strong>" + currentUserData.currency + " " + amountInp.toFixed(2) + "</strong> submitted successfully.<br><br><strong>Status:</strong> Pending Approval";
+
+                        modalPrimaryBtn.innerText = "Close Notification";
+                        modalPrimaryBtn.onclick = function() {
+                            modal.classList.remove('active');
+                            document.getElementById('wireTransferForm').reset();
+                        };
+                        modalCloseBtn.style.display = "none";
+                        modalActions.style.display = "flex";
+                    }
+                }
+            }, 1200);
+        });
+    </script>
+
     <script>
-    var activeRoute = 'local';
-    var STORAGE_KEY = 'apexon_qatar_user';
     var globalCountries = ["Qatar", "Mexico", "Venezuela", "Colombia", "Ecuador", "United Kingdom", "United States", "United Arab Emirates", "Canada", "Germany", "France", "Saudi Arabia", "Kuwait", "Oman", "Bahrain", "India", "China"];
 
-    function getStoreUser() {
-        var rawData = localStorage.getItem(STORAGE_KEY);
-        var defaultData = {
-            fullName: "Marcus Lee Hong",
-            username: "marcus_lee",
-            accountNo: "QA9482019384729104",
-            balance: 536900.00,
-            currency: "QAR",
-            isExternalVerified: false,
-            transactions: []
-        };
-
-        if (rawData) {
-            try {
-                return JSON.parse(rawData);
-            } catch (e) {
-                return defaultData;
-            }
-        } else {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
-            return defaultData;
-        }
-    }
-
-    function fetchDashboardBalance() {
-        var user = getStoreUser();
-        return {
-            fullName: user.fullName || "Marcus Lee Hong",
-            balance: parseFloat(user.balance || 0),
-            currency: user.currency || "QAR"
-        };
-    }
-
-    function initWireGateway() {
-        var userData = fetchDashboardBalance();
-        var symbol = userData.currency;
-        document.getElementById('currencySymbol').innerText = symbol;
-        
-        var currentBal = parseFloat(userData.balance);
-        var formattedBal = symbol + " " + currentBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        document.getElementById('liveBalanceDisplay').innerText = formattedBal;
-
-        var countryDropdown = document.getElementById('destinationCountry');
-        if(countryDropdown && countryDropdown.options.length <= 1) {
-            globalCountries.forEach(function(c) {
-                var o = document.createElement("option");
-                o.value = c;
-                o.textContent = c;
-                countryDropdown.appendChild(o);
-            });
-        }
-    }
-
     function switchRoute(type) {
-        activeRoute = type;
         var tabLocal = document.getElementById('tabLocal');
         var tabInter = document.getElementById('tabInter');
         var routingLabel = document.getElementById('routingLabel');
@@ -560,158 +693,15 @@
         }
     }
 
-    function openLiveSupport() {
-        document.getElementById('transferModal').classList.remove('active');
-        if (typeof Tawk_API !== 'undefined' && Tawk_API.maximize) {
-            Tawk_API.maximize();
-        } else {
-            alert("Customer support widget is loading. Please click the chat bubble on the bottom right.");
-        }
+    var countryDropdown = document.getElementById('destinationCountry');
+    if(countryDropdown && countryDropdown.options.length <= 1) {
+        globalCountries.forEach(function(c) {
+            var o = document.createElement("option");
+            o.value = c;
+            o.textContent = c;
+            countryDropdown.appendChild(o);
+        });
     }
-
-    document.getElementById('wireTransferForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        var nameInp = document.getElementById('beneficiaryName').value.trim();
-        var accountInp = document.getElementById('beneficiaryAccount').value.trim();
-        var bankInp = document.getElementById('bankName').value.trim();
-        var routingInp = document.getElementById('routingValue').value.trim();
-        var amountInp = parseFloat(document.getElementById('transferAmount').value);
-        var narrationInp = document.getElementById('narration').value.trim();
-        var balanceError = document.getElementById('balanceError');
-        
-        balanceError.style.display = 'none';
-
-        var user = getStoreUser();
-        var currentBalance = parseFloat(user.balance || 0);
-
-        if (amountInp > currentBalance || amountInp <= 0 || isNaN(amountInp)) {
-            balanceError.style.display = 'block';
-            return;
-        }
-
-        var modal = document.getElementById('transferModal');
-        var modalIcon = document.getElementById('modalIcon');
-        var modalTitle = document.getElementById('modalTitle');
-        var modalBody = document.getElementById('modalBody');
-        var modalActions = document.getElementById('modalActions');
-        var modalPrimaryBtn = document.getElementById('modalPrimaryBtn');
-        var modalCloseBtn = document.getElementById('modalCloseBtn');
-
-        modalIcon.innerText = "⏳";
-        modalTitle.innerText = "Processing Request";
-        modalBody.innerText = "Connecting to secure Qatar Central Node...";
-        modalActions.style.display = "none";
-        modal.classList.add('active');
-
-        var isInternal = bankInp.toLowerCase().includes("apexon");
-
-        setTimeout(function() {
-            if (isInternal) {
-                // INTRA-BANK TRANSFER: Execute Immediately + Add Bonus
-                var bonusAmount = 1.00;
-                user.balance = (currentBalance - amountInp) + bonusAmount;
-
-                var now = new Date();
-                var dateStr = now.toLocaleDateString();
-                var timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                // Add Outbound Debit
-                user.transactions.unshift({
-                    description: "Apexon Intra-Transfer: " + nameInp,
-                    receiver: nameInp,
-                    beneficiaryAccount: accountInp,
-                    bankName: bankInp,
-                    amount: amountInp,
-                    type: "debit",
-                    status: "Completed",
-                    channel: "Apexon Internal Network",
-                    narration: narrationInp || "Internal Instant Transfer",
-                    date: dateStr,
-                    time: timeStr
-                });
-
-                // Add Bonus Credit
-                user.transactions.unshift({
-                    description: "Internal Transfer Bonus Reward",
-                    amount: bonusAmount,
-                    type: "credit",
-                    status: "Completed",
-                    channel: "Apexon Rewards",
-                    narration: "Bonus credit for using internal Apexon gateway",
-                    date: dateStr,
-                    time: timeStr
-                });
-
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-                initWireGateway();
-
-                modalIcon.innerText = "✅";
-                modalTitle.innerText = "Transfer Successful";
-                modalBody.innerHTML = "Outbound transfer of <strong>" + user.currency + " " + amountInp.toFixed(2) + "</strong> sent successfully to <strong>" + nameInp + "</strong>.<br><br>🎉 <strong>Bonus Earned:</strong> " + user.currency + " " + bonusAmount.toFixed(2) + " credited to your balance for using Apexon Internal Gateway.";
-
-                modalPrimaryBtn.innerText = "Done";
-                modalPrimaryBtn.onclick = function() {
-                    modal.classList.remove('active');
-                    document.getElementById('wireTransferForm').reset();
-                };
-                modalCloseBtn.style.display = "none";
-                modalActions.style.display = "flex";
-
-            } else {
-                // EXTERNAL BANK TRANSFER: Check First-Time Live Chat Security
-                if (!user.isExternalVerified) {
-                    modalIcon.innerText = "🛡️";
-                    modalTitle.innerText = "Verification Required";
-                    modalBody.innerText = "First-time external wire transfers require live identity verification before clearing. Please kindly chat with our live customer support to complete verification.";
-
-                    modalPrimaryBtn.innerText = "💬 Start Live Verification";
-                    modalPrimaryBtn.onclick = openLiveSupport;
-
-                    modalCloseBtn.innerText = "Cancel";
-                    modalCloseBtn.style.display = "block";
-                    modalCloseBtn.onclick = function() {
-                        modal.classList.remove('active');
-                    };
-                    modalActions.style.display = "flex";
-
-                } else {
-                    // VERIFIED EXTERNAL TRANSFER
-                    var now = new Date();
-                    user.transactions.unshift({
-                        description: "Wire Transfer: " + nameInp,
-                        receiver: nameInp,
-                        beneficiaryAccount: accountInp,
-                        bankName: bankInp,
-                        routingCode: routingInp,
-                        amount: amountInp,
-                        type: "debit",
-                        status: "Pending Approval",
-                        channel: activeRoute === 'local' ? "Domestic Wire" : "Inter-Continental Wire",
-                        narration: narrationInp || "Outbound Wire Settlement",
-                        date: now.toLocaleDateString(),
-                        time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    });
-
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-
-                    modalIcon.innerText = "💼";
-                    modalTitle.innerText = "Transfer Awaiting Release";
-                    modalBody.innerHTML = "Outbound transfer of <strong>" + user.currency + " " + amountInp.toFixed(2) + "</strong> submitted successfully.<br><br><strong>Status:</strong> Pending Approval<br><strong>Ref:</strong> TXN-" + Math.floor(Math.random()*899999+100000);
-
-                    modalPrimaryBtn.innerText = "Close Notification";
-                    modalPrimaryBtn.onclick = function() {
-                        modal.classList.remove('active');
-                        document.getElementById('wireTransferForm').reset();
-                    };
-                    modalCloseBtn.style.display = "none";
-                    modalActions.style.display = "flex";
-                }
-            }
-        }, 1500);
-    });
-
-    initWireGateway();
     </script>
 </body>
 </html>
