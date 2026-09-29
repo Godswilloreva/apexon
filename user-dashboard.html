@@ -306,7 +306,7 @@
     </header>
 
     <div class="hero-banner">
-        <p style="font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;" id="accountCountryTag">ACCOUNT • ACTIVE</p>
+        <p style="font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;" id="accountCountryTag">🇶🇦 Qatar Account • Active</p>
         <h1 style="font-size: 24px; font-weight: 700; margin-top: 4px; display: flex; align-items: center;" id="welcomeName">
             Welcome, <span id="userNameText">Loading...</span>
             <span class="verified-badge" title="Verified Account">
@@ -324,7 +324,7 @@
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                 <div>
                     <p class="card-label-style">Available Clear Balance</p>
-                    <h2 style="font-size: 32px; font-weight: 700; color: var(--text-dark-override); margin-top: 4px;" id="accountBalance">$ 0.00</h2>
+                    <h2 style="font-size: 32px; font-weight: 700; color: var(--text-dark-override); margin-top: 4px;" id="accountBalance">QAR 0.00</h2>
                 </div>
                 <span style="background: #f0fdf4; color: #166534; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 9999px; border: 1px solid #bbf7d0;">● Live</span>
             </div>
@@ -336,7 +336,7 @@
                 </div>
                 <div>
                     <span style="color: var(--text-sub);">Routing :</span>
-                    <span class="gold-accent-text" style="margin-left: 4px;" id="routingText">APX-GLOBAL</span>
+                    <span class="gold-accent-text" style="margin-left: 4px;" id="routingText">APX-QATAR</span>
                 </div>
             </div>
         </div>
@@ -419,28 +419,27 @@
         </div>
     </div>
 
-    <!-- FIREBASE REALTIME DATABASE MODULES -->
+    <!-- FIREBASE MODULES & LIVE FIRESTORE SYNC -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-        // Replace with your exact Realtime Database Config keys
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyCrjHf4jXF-12q0Ux9FXuC9qvPbtSybiGg",
+            authDomain: "apexon-18436.firebaseapp.com",
+            projectId: "apexon-18436",
+            storageBucket: "apexon-18436.firebasestorage.app",
+            messagingSenderId: "860159843934",
+            appId: "1:860159843934:web:d149cd4766935be2525ecf",
+            measurementId: "G-TZ7QJMGJK0"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const database = getDatabase(app);
+        const db = getFirestore(app);
 
-        let unsubscribeUserListener = null;
+        let unsubscribeUserDoc = null;
 
         function escapeHtml(str) {
             if (!str) return '';
@@ -452,28 +451,65 @@
                 .replace(/'/g, "&#039;");
         }
 
+        // Generate unique account number based on user's country
+        function generateUniqueAccountNumber(country) {
+            const countryCodes = {
+                'qatar': 'QAT',
+                'nigeria': 'NGA',
+                'united states': 'USA',
+                'us': 'USA',
+                'united kingdom': 'GBR',
+                'uk': 'GBR',
+                'canada': 'CAN',
+                'uae': 'ARE',
+                'united arab emirates': 'ARE',
+                'germany': 'DEU',
+                'france': 'FRA'
+            };
+
+            const cleanCountry = (country || 'qatar').trim().toLowerCase();
+            const prefix = countryCodes[cleanCountry] || cleanCountry.substring(0, 3).toUpperCase();
+            
+            // Generate a random 10-digit account number
+            const randomDigits = Math.floor(1000000000 + Math.random() * 9000000000);
+            return `${prefix}-${randomDigits}`;
+        }
+
         // Authenticate User State
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Read directly from Realtime Database under users/{uid}
-                const userRef = ref(database, 'users/' + user.uid);
+                // Realtime Listener for the authenticated user document in Firestore
+                const userDocRef = doc(db, "users", user.uid);
                 
-                unsubscribeUserListener = onValue(userRef, (snapshot) => {
+                unsubscribeUserDoc = onSnapshot(userDocRef, async (snapshot) => {
                     if (snapshot.exists()) {
-                        const userData = snapshot.val();
+                        const userData = snapshot.data();
+                        
+                        // Check if user needs an account number generated
+                        if (!userData.accountNo || userData.accountNo === "--------------" || userData.accountNo === "N/A") {
+                            const newAccountNo = generateUniqueAccountNumber(userData.country);
+                            try {
+                                await updateDoc(userDocRef, { accountNo: newAccountNo });
+                                userData.accountNo = newAccountNo;
+                            } catch (e) {
+                                console.error("Error updating account number:", e);
+                            }
+                        }
+
                         renderDashboard(userData);
                     } else {
-                        console.error("User record not found in Realtime Database.");
+                        console.error("User document does not exist in Firestore.");
                     }
                 }, (error) => {
-                    console.error("Realtime Database error:", error);
+                    console.error("Firestore error listening to user document:", error);
                 });
             } else {
+                // If not logged in, redirect to login page
                 window.location.href = "login.html";
             }
         });
 
-        // Render UI with user's real balance and transaction data
+        // Render UI with user's real registration and account data
         function renderDashboard(data) {
             const userNameText = document.getElementById('userNameText');
             const accountBalance = document.getElementById('accountBalance');
@@ -482,41 +518,39 @@
             const routingText = document.getElementById('routingText');
             const ledgerContainer = document.getElementById('ledgerContainer');
 
-            const currency = data.currencySymbol || '$';
-            const country = data.nationality || 'GLOBAL';
+            const currency = data.currency || 'QAR';
+            const country = data.country || 'Qatar';
 
             if (userNameText) userNameText.innerText = escapeHtml(data.fullName || "Valued Customer");
             if (accountCountryTag) accountCountryTag.innerText = `ACCOUNT • ${country.toUpperCase()} • ACTIVE`;
-            if (accountNumber) accountNumber.innerText = escapeHtml(data.accountNumber || "N/A");
-            if (routingText) routingText.innerText = `APX-${country.substring(0, 5).toUpperCase().replace(/[^A-Z]/g, '')}`;
+            if (accountNumber) accountNumber.innerText = escapeHtml(data.accountNo || "N/A");
+            if (routingText) routingText.innerText = `APX-${country.substring(0, 5).toUpperCase()}`;
 
             if (accountBalance) {
-                // Ensure strictly clean numeric parsing for pure calculation
-                const numericBal = parseFloat(data.accountBalance) || 0;
-                accountBalance.innerText = `${currency} ${numericBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                const bal = parseFloat(data.balance || 0);
+                accountBalance.innerText = `${currency} ${bal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             }
 
-            // Render Activity Ledger
+            // Render Recent Activity/Transactions
             if (ledgerContainer) {
-                const transactions = data.transactions ? Object.values(data.transactions) : [];
+                const transactions = data.transactions || [];
                 if (Array.isArray(transactions) && transactions.length > 0) {
                     let html = '';
                     for (let i = transactions.length - 1; i >= 0; i--) {
                         const tx = transactions[i];
-                        const isCredit = tx.type === 'credit' || tx.type === 'deposit';
+                        const isCredit = tx.type === 'credit';
                         const sign = isCredit ? `+ ${currency} ` : `- ${currency} `;
                         const color = isCredit ? "#166534" : "#ef4444";
-                        const amount = parseFloat(tx.amount) || 0;
 
                         html += `
                             <div class="transaction-item">
                                 <div>
                                     <p style="font-size: 13px; font-weight: 600; color: var(--text-dark-override);">${escapeHtml(tx.description || 'Transaction')}</p>
                                     <p style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.sender || 'Clearing Node')}</p>
-                                    ${tx.date ? `<p style="font-size: 10px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.date)}</p>` : ''}
+                                    ${tx.date ? `<p style="font-size: 10px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.date)}${tx.time ? '• ' + escapeHtml(tx.time) : ''}</p>` : ''}
                                 </div>
                                 <div style="text-align: right;">
-                                    <p style="font-size: 13px; font-weight: 700; color: ${color};">${sign}${amount.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+                                    <p style="font-size: 13px; font-weight: 700; color: ${color};">${sign}${parseFloat(tx.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
                                     <p style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.status || 'Successful')}</p>
                                 </div>
                             </div>
@@ -529,7 +563,7 @@
             }
         }
 
-        // Logout Modal Logic
+        // Apexon Custom Modal Logout Logic
         const logoutModal = document.getElementById('logoutModal');
         const logoutBtn = document.getElementById('logoutBtn');
         const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
@@ -544,6 +578,7 @@
         });
 
         confirmLogoutBtn.addEventListener('click', () => {
+            if (unsubscribeUserDoc) unsubscribeUserDoc();
             signOut(auth).then(() => {
                 window.location.href = "login.html";
             }).catch((err) => {
