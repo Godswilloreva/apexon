@@ -173,31 +173,6 @@
             padding: 20px;
         }
 
-        .route-tabs {
-            display: flex;
-            background: var(--tab-bg);
-            padding: 4px;
-            border-radius: 14px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-        }
-
-        .route-tab {
-            flex: 1;
-            text-align: center;
-            padding: 11px;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-sub);
-            cursor: pointer;
-            border-radius: 10px;
-        }
-
-        .route-tab.active {
-            background: var(--tab-active);
-            color: var(--text-main);
-        }
-
         .form-card {
             background: var(--bg-card);
             border-radius: 20px;
@@ -228,7 +203,7 @@
             text-transform: uppercase;
         }
 
-        .input-group input, .input-group select, .input-group textarea {
+        .input-group input, .input-group textarea {
             width: 100%;
             padding: 14px 16px;
             border-radius: 12px;
@@ -247,6 +222,15 @@
             font-weight: 600;
         }
 
+        .success-msg {
+            font-size: 13px;
+            color: var(--success-green);
+            margin-top: 10px;
+            display: none;
+            font-weight: 700;
+            text-align: center;
+        }
+
         .action-btn {
             width: 100%;
             padding: 16px;
@@ -258,12 +242,6 @@
             font-weight: 700;
             cursor: pointer;
             margin-top: 10px;
-            transition: opacity 0.2s;
-        }
-
-        .action-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
         }
 
         .bottom-nav {
@@ -289,71 +267,6 @@
             text-decoration: none;
             font-size: 11px;
             font-weight: 600;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(11, 15, 25, 0.75);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 99999;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .modal-card {
-            background: var(--bg-card);
-            border-radius: 24px;
-            width: 100%;
-            max-width: 400px;
-            padding: 32px 24px;
-            text-align: center;
-            border: 2px solid var(--accent-gold);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-        }
-
-        .btn-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .modal-btn-primary {
-            width: 100%;
-            padding: 14px;
-            background: var(--gold-gradient);
-            color: #0b1329;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .modal-btn-secondary {
-            width: 100%;
-            padding: 12px;
-            background: transparent;
-            color: var(--text-sub);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
         }
     </style>
 </head>
@@ -381,11 +294,6 @@
     </div>
 
     <div class="page-container">
-        <div class="route-tabs">
-            <div class="route-tab active" id="tabLocal" onclick="switchRoute('local')">Domestic Wire</div>
-            <div class="route-tab" id="tabInter" onclick="switchRoute('international')">Inter-Continental</div>
-        </div>
-
         <form id="wireTransferForm" class="form-card">
             <div class="form-section-title">Beneficiary Details</div>
 
@@ -395,25 +303,13 @@
             </div>
 
             <div class="input-group">
-                <label id="accountNumberLabel">🔢 Account Number</label>
-                <input type="text" id="beneficiaryAccount" placeholder="Enter ledger account number" required>
+                <label>🔢 Account Number (Starts with QAT)</label>
+                <input type="text" id="beneficiaryAccount" placeholder="e.g. QAT102938" required>
             </div>
 
             <div class="input-group">
-                <label>🏢 Destination Bank</label>
-                <input type="text" id="bankName" placeholder="e.g. Apexon Bank, QNB, Chase, Barclays" required>
-            </div>
-
-            <div class="input-group" id="routingGroup">
-                <label id="routingLabel">📌 Routing Transit / APX Code</label>
-                <input type="text" id="routingValue" placeholder="Enter routing code" required>
-            </div>
-
-            <div class="input-group" id="countryGroup" style="display: none;">
-                <label>🌍 Destination Country</label>
-                <select id="destinationCountry">
-                    <option value="" disabled selected>Select Destination Country</option>
-                </select>
+                <label>📌 Routing APX Code (Starts with APX)</label>
+                <input type="text" id="routingValue" placeholder="e.g. APX00192" required>
             </div>
 
             <div class="form-section-title" style="margin-top: 24px;">Payment Parameters</div>
@@ -421,7 +317,6 @@
             <div class="input-group">
                 <label>💰 Transfer Amount (<span class="currencySymbol">֏</span>)</label>
                 <input type="number" step="0.01" id="transferAmount" placeholder="0.00" required>
-                <div class="error-msg" id="balanceError">Insufficient available funds for this transfer.</div>
             </div>
 
             <div class="input-group">
@@ -429,7 +324,10 @@
                 <textarea id="narration" rows="2" placeholder="Purpose of transaction (Optional)"></textarea>
             </div>
 
-            <button type="submit" id="submitBtn" class="action-btn">Transfer</button>
+            <div class="error-msg" id="statusError"></div>
+            <div class="success-msg" id="statusSuccess"></div>
+
+            <button type="submit" id="submitBtn" class="action-btn">Transfer Immediately</button>
         </form>
     </div>
 
@@ -439,21 +337,6 @@
         <a href="card.html" class="nav-item"><div style="font-size: 20px;">💳</div><div>Cards</div></a>
         <a href="profile.html" class="nav-item"><div style="font-size: 20px;">👤</div><div>Profile</div></a>
         <a href="settings.html" class="nav-item"><div style="font-size: 20px;">⚙️</div><div>Settings</div></a>
-    </div>
-
-    <div class="modal-overlay" id="transferModal">
-        <div class="modal-card">
-            <div style="font-size: 48px; margin-bottom: 14px;" id="modalIcon">⏳</div>
-            <h2 style="font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;" id="modalTitle">Processing Request</h2>
-            <p style="font-size: 14px; color: var(--text-sub); line-height: 1.5; margin-bottom: 16px;" id="modalBody">
-                PLEASE WAIT...
-            </p>
-
-            <div class="btn-stack" id="modalActions" style="display: none;">
-                <button class="modal-btn-primary" id="modalPrimaryBtn">Action</button>
-                <button class="modal-btn-secondary" id="modalCloseBtn">Close</button>
-            </div>
-        </div>
     </div>
 
     <!-- Firebase SDK Matching user-dashboard.html Version -->
@@ -478,39 +361,26 @@
 
         window.activeUserDocRef = null;
         window.currentUserData = null;
-        window.currentUserId = null;
-        window.parsedAvailableBalance = 0; // State variable to cache numerical balance
+        window.parsedAvailableBalance = 0;
 
-        // Hardened Numeric Parser for localized strings, symbol prefixes, and spaces
         function parseNumericValue(val) {
             if (val === undefined || val === null) return 0;
             if (typeof val === 'number') return isNaN(val) ? 0 : val;
-
-            // Normalize all white-space variations including non-breaking spaces
             let str = String(val).replace(/[\s\u00A0\u2009]+/g, ' ').trim();
-
             if (str.includes(" ")) {
                 let parts = str.split(' ').map(p => p.replace(/[^0-9.-]/g, '')).filter(Boolean);
-                if (parts.length === 2) {
-                    str = parts[0] + "." + parts[1];
-                } else {
-                    str = parts.join('');
-                }
+                str = parts.length === 2 ? parts[0] + "." + parts[1] : parts.join('');
             } else {
                 str = str.replace(/[^0-9.-]/g, '');
             }
-
             let parsed = parseFloat(str);
             return isNaN(parsed) ? 0 : parsed;
         }
 
         function syncDashboardUI(data) {
             if (!data) return;
-
             const currency = data.currency || "֏";
             let rawVal = data.balance !== undefined && data.balance !== null ? data.balance : data.amount;
-            
-            // Calculate and cache global numeric balance state
             window.parsedAvailableBalance = parseNumericValue(rawVal);
 
             document.querySelectorAll('.currencySymbol').forEach(el => el.innerText = currency);
@@ -521,28 +391,16 @@
             });
 
             document.getElementById('liveBalanceDisplay').innerText = `${currency}${formatted}`;
-            
-            const country = data.country || "Qatar";
-            document.getElementById('channelIndicator').innerHTML = `<span class="channel-dot"></span> ${country} Node`;
         }
-
-        // Live input validation to reset errors on keyup
-        document.getElementById('transferAmount').addEventListener('input', function() {
-            document.getElementById('balanceError').style.display = 'none';
-        });
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                window.currentUserId = user.uid;
                 window.activeUserDocRef = doc(db, "users", user.uid);
-
                 onSnapshot(window.activeUserDocRef, (docSnap) => {
                     if (docSnap.exists()) {
                         window.currentUserData = docSnap.data();
                         syncDashboardUI(window.currentUserData);
                     }
-                }, (err) => {
-                    console.error("Firestore read error:", err);
                 });
             } else {
                 window.location.href = "login.html";
@@ -552,195 +410,120 @@
         document.getElementById('wireTransferForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const balanceError = document.getElementById('balanceError');
-            balanceError.style.display = 'none';
+            const statusError = document.getElementById('statusError');
+            const statusSuccess = document.getElementById('statusSuccess');
+            const submitBtn = document.getElementById('submitBtn');
 
-            // Check if account data has finished loading from Firebase
-            if (!window.activeUserDocRef || !window.currentUserData) {
-                balanceError.innerText = "Syncing account data... please try again in a moment.";
-                balanceError.style.display = 'block';
-                return;
-            }
+            statusError.style.display = 'none';
+            statusSuccess.style.display = 'none';
 
             const nameInp = document.getElementById('beneficiaryName').value.trim();
             const accountInp = document.getElementById('beneficiaryAccount').value.trim();
-            const bankInp = document.getElementById('bankName').value.trim();
+            const routingInp = document.getElementById('routingValue').value.trim();
             const amountInp = parseFloat(document.getElementById('transferAmount').value);
-            const narrationInp = document.getElementById('narration').value.trim();
 
-            const activeBalance = window.parsedAvailableBalance;
-
-            // Strict Validation against active numerical balance
-            if (isNaN(amountInp) || amountInp <= 0 || amountInp > activeBalance) {
-                balanceError.innerText = "Insufficient available funds for this transfer.";
-                balanceError.style.display = 'block';
+            // Rule Verification
+            if (!accountInp.toUpperCase().startsWith("QAT")) {
+                statusError.innerText = "Invalid Account Number. Must start with QAT.";
+                statusError.style.display = 'block';
                 return;
             }
 
-            const modal = document.getElementById('transferModal');
-            const modalIcon = document.getElementById('modalIcon');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalBody = document.getElementById('modalBody');
-            const modalActions = document.getElementById('modalActions');
-            const modalPrimaryBtn = document.getElementById('modalPrimaryBtn');
-            const modalCloseBtn = document.getElementById('modalCloseBtn');
+            if (!routingInp.toUpperCase().startsWith("APX")) {
+                statusError.innerText = "Invalid Routing Code. Must start with APX.";
+                statusError.style.display = 'block';
+                return;
+            }
 
-            modalIcon.innerText = "⏳";
-            modalTitle.innerText = "Processing Request";
-            modalBody.innerText = "Verifying transaction parameters with clearing node...";
-            modalActions.style.display = "none";
-            modal.classList.add('active');
+            const activeBalance = window.parsedAvailableBalance;
+            if (isNaN(amountInp) || amountInp <= 0 || amountInp > activeBalance) {
+                statusError.innerText = "Insufficient funds for this transfer.";
+                statusError.style.display = 'block';
+                return;
+            }
 
-            const activeCurrency = window.currentUserData.currency || "֏";
-            const isInternalApexon = bankInp.toLowerCase().includes("apexon");
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Processing...";
 
-            setTimeout(async function() {
+            try {
+                // Find recipient by accountNo matching accountInp
+                const usersRef = collection(db, "users");
+                const q = query(usersRef, where("accountNo", "==", accountInp));
+                const querySnapshot = await getDocs(q);
+
+                let recipientDocRef = null;
+                let recipientData = null;
+
+                querySnapshot.forEach((docSnap) => {
+                    recipientDocRef = doc(db, "users", docSnap.id);
+                    recipientData = docSnap.data();
+                });
+
                 const now = new Date();
                 const dateStr = now.toLocaleDateString();
                 const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const activeCurrency = window.currentUserData.currency || "֏";
 
-                if (isInternalApexon) {
-                    try {
-                        const usersRef = collection(db, "users");
-                        const q = query(usersRef, where("accountNo", "==", accountInp));
-                        const querySnapshot = await getDocs(q);
+                // Debit Sender
+                const senderNewBalance = activeBalance - amountInp;
+                const debitTx = {
+                    title: "Transfer to " + nameInp,
+                    description: `Apexon Wire to ${nameInp}`,
+                    sender: window.currentUserData.fullName || "Self",
+                    receiver: nameInp,
+                    beneficiaryAccount: accountInp,
+                    amount: amountInp,
+                    currency: activeCurrency,
+                    type: "debit",
+                    status: "Completed",
+                    date: dateStr,
+                    time: timeStr
+                };
 
-                        let recipientDocRef = null;
-                        let recipientData = null;
+                await updateDoc(window.activeUserDocRef, {
+                    balance: senderNewBalance,
+                    amount: senderNewBalance,
+                    transactions: arrayUnion(debitTx)
+                });
 
-                        querySnapshot.forEach((docSnap) => {
-                            recipientDocRef = doc(db, "users", docSnap.id);
-                            recipientData = docSnap.data();
-                        });
+                // Credit Recipient if found in database
+                if (recipientDocRef && recipientData) {
+                    let recipientRaw = recipientData.balance !== undefined && recipientData.balance !== null ? recipientData.balance : recipientData.amount;
+                    let recipientCurrentBal = parseNumericValue(recipientRaw);
 
-                        const senderNewBalance = activeBalance - amountInp;
-                        const debitTx = {
-                            title: "Transfer to " + nameInp,
-                            description: `Apexon Transfer to ${nameInp}`,
-                            sender: window.currentUserData.fullName || "Self",
-                            receiver: nameInp,
-                            beneficiaryAccount: accountInp,
-                            bankName: bankInp,
-                            amount: amountInp,
-                            currency: activeCurrency,
-                            type: "debit",
-                            status: "Completed",
-                            date: dateStr,
-                            time: timeStr
-                        };
-
-                        await updateDoc(window.activeUserDocRef, {
-                            balance: senderNewBalance,
-                            amount: senderNewBalance,
-                            transactions: arrayUnion(debitTx)
-                        });
-
-                        if (recipientDocRef && recipientData) {
-                            let recipientRaw = recipientData.balance !== undefined && recipientData.balance !== null ? recipientData.balance : recipientData.amount;
-                            let recipientCurrentBal = parseNumericValue(recipientRaw);
-
-                            const creditTx = {
-                                title: "Received from " + (window.currentUserData.fullName || "Apexon User"),
-                                description: `Apexon Transfer from ${window.currentUserData.fullName || "Apexon User"}`,
-                                sender: window.currentUserData.fullName || "Apexon User",
-                                receiver: recipientData.fullName || nameInp,
-                                amount: amountInp,
-                                currency: activeCurrency,
-                                type: "credit",
-                                status: "Completed",
-                                date: dateStr,
-                                time: timeStr
-                            };
-
-                            await updateDoc(recipientDocRef, {
-                                balance: recipientCurrentBal + amountInp,
-                                amount: recipientCurrentBal + amountInp,
-                                transactions: arrayUnion(creditTx)
-                            });
-                        }
-
-                        modalIcon.innerText = "✅";
-                        modalTitle.innerText = "Transfer Successful";
-                        modalBody.innerHTML = `Internal transfer of <strong>${activeCurrency}${amountInp.toFixed(2)}</strong> to <strong>${nameInp}</strong> was successful.`;
-
-                        modalPrimaryBtn.innerText = "Done";
-                        modalPrimaryBtn.onclick = function() {
-                            modal.classList.remove('active');
-                            document.getElementById('wireTransferForm').reset();
-                            document.getElementById('balanceError').style.display = 'none';
-                        };
-                        modalCloseBtn.style.display = "none";
-                        modalActions.style.display = "flex";
-
-                    } catch (err) {
-                        console.error("Transfer Error:", err);
-                        modalIcon.innerText = "❌";
-                        modalTitle.innerText = "Transaction Failed";
-                        modalBody.innerText = "Could not process, kindly message the live chat customer care.";
-                        modalPrimaryBtn.innerText = "Close";
-                        modalPrimaryBtn.onclick = function() { modal.classList.remove('active'); };
-                        modalCloseBtn.style.display = "none";
-                        modalActions.style.display = "flex";
-                    }
-
-                } else {
-                    modalIcon.innerText = "🛡️";
-                    modalTitle.innerText = "Face Live Verification Required";
-                    modalBody.innerText = "Security protocol requires face live verification with customer care for transfers outside Apexon Bank. Please contact live support to complete security authorization.";
-
-                    modalPrimaryBtn.innerText = "💬 Chat with Live Customer Care";
-                    modalPrimaryBtn.onclick = function() {
-                        modal.classList.remove('active');
-                        if (typeof Tawk_API !== 'undefined' && Tawk_API.maximize) {
-                            Tawk_API.maximize();
-                        } else {
-                            alert("Customer support widget is loading... please wait.");
-                        }
+                    const creditTx = {
+                        title: "Received from " + (window.currentUserData.fullName || "Apexon User"),
+                        description: `Apexon Wire from ${window.currentUserData.fullName || "Apexon User"}`,
+                        sender: window.currentUserData.fullName || "Apexon User",
+                        receiver: recipientData.fullName || nameInp,
+                        amount: amountInp,
+                        currency: activeCurrency,
+                        type: "credit",
+                        status: "Completed",
+                        date: dateStr,
+                        time: timeStr
                     };
 
-                    modalCloseBtn.innerText = "Cancel";
-                    modalCloseBtn.style.display = "block";
-                    modalCloseBtn.onclick = function() { modal.classList.remove('active'); };
-                    modalActions.style.display = "flex";
+                    await updateDoc(recipientDocRef, {
+                        balance: recipientCurrentBal + amountInp,
+                        amount: recipientCurrentBal + amountInp,
+                        transactions: arrayUnion(creditTx)
+                    });
                 }
-            }, 1200);
+
+                statusSuccess.innerText = `Transfer Successful! ${activeCurrency}${amountInp.toFixed(2)} debited.`;
+                statusSuccess.style.display = 'block';
+                document.getElementById('wireTransferForm').reset();
+
+            } catch (err) {
+                console.error("Transfer Error:", err);
+                statusError.innerText = "Transaction failed. Please try again.";
+                statusError.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Transfer Immediately";
+            }
         });
-    </script>
-
-    <script>
-    var globalCountries = ["Qatar", "Mexico", "Venezuela", "Colombia", "Ecuador", "United Kingdom", "United States", "United Arab Emirates", "Canada", "Germany", "France", "Saudi Arabia", "Kuwait", "Oman", "Bahrain", "India", "China"];
-
-    function switchRoute(type) {
-        var tabLocal = document.getElementById('tabLocal');
-        var tabInter = document.getElementById('tabInter');
-        var routingLabel = document.getElementById('routingLabel');
-        var routingValue = document.getElementById('routingValue');
-        var countryGroup = document.getElementById('countryGroup');
-
-        if (type === 'local') {
-            tabLocal.classList.add('active');
-            tabInter.classList.remove('active');
-            routingLabel.innerText = "📌 Routing Transit / APX Code";
-            routingValue.placeholder = "Enter APX routing code";
-            countryGroup.style.display = 'none';
-        } else {
-            tabInter.classList.add('active');
-            tabLocal.classList.remove('active');
-            routingLabel.innerText = "📌 SWIFT / BIC Network Code";
-            routingValue.placeholder = "Enter 8 or 11 character SWIFT code";
-            countryGroup.style.display = 'flex';
-        }
-    }
-
-    var countryDropdown = document.getElementById('destinationCountry');
-    if(countryDropdown && countryDropdown.options.length <= 1) {
-        globalCountries.forEach(function(c) {
-            var o = document.createElement("option");
-            o.value = c;
-            o.textContent = c;
-            countryDropdown.appendChild(o);
-        });
-    }
     </script>
 </body>
 </html>
