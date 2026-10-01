@@ -25,7 +25,6 @@
     s0.parentNode.insertBefore(s1,s0);
     })();
     </script>
-    <!-- End of Tawk.to Script -->
 
     <style>
         :root {
@@ -339,7 +338,6 @@
         <a href="settings.html" class="nav-item"><div style="font-size: 20px;">⚙️</div><div>Settings</div></a>
     </div>
 
-    <!-- Firebase SDK Matching user-dashboard.html Version -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -363,16 +361,20 @@
         window.currentUserData = null;
         window.parsedAvailableBalance = 0;
 
+        // FIXED: Clean numeric parser that reliably extracts numeric balance
         function parseNumericValue(val) {
             if (val === undefined || val === null) return 0;
             if (typeof val === 'number') return isNaN(val) ? 0 : val;
-            let str = String(val).replace(/[\s\u00A0\u2009]+/g, ' ').trim();
-            if (str.includes(" ")) {
-                let parts = str.split(' ').map(p => p.replace(/[^0-9.-]/g, '')).filter(Boolean);
-                str = parts.length === 2 ? parts[0] + "." + parts[1] : parts.join('');
-            } else {
-                str = str.replace(/[^0-9.-]/g, '');
+            
+            // Clean string of currency symbols and whitespace
+            let str = String(val).replace(/[^0-9.-]/g, '');
+            
+            // Handle edge cases with multiple dots
+            let parts = str.split('.');
+            if (parts.length > 2) {
+                str = parts[0] + '.' + parts.slice(1).join('');
             }
+
             let parsed = parseFloat(str);
             return isNaN(parsed) ? 0 : parsed;
         }
@@ -380,7 +382,9 @@
         function syncDashboardUI(data) {
             if (!data) return;
             const currency = data.currency || "֏";
-            let rawVal = data.balance !== undefined && data.balance !== null ? data.balance : data.amount;
+            
+            // Check all possible field names for balance across Firestore documents
+            let rawVal = data.balance ?? data.amount ?? data.availableBalance ?? data.accountBalance ?? 0;
             window.parsedAvailableBalance = parseNumericValue(rawVal);
 
             document.querySelectorAll('.currencySymbol').forEach(el => el.innerText = currency);
@@ -422,7 +426,6 @@
             const routingInp = document.getElementById('routingValue').value.trim();
             const amountInp = parseFloat(document.getElementById('transferAmount').value);
 
-            // Rule Verification
             if (!accountInp.toUpperCase().startsWith("QAT")) {
                 statusError.innerText = "Invalid Account Number. Must start with QAT.";
                 statusError.style.display = 'block';
@@ -437,7 +440,7 @@
 
             const activeBalance = window.parsedAvailableBalance;
             if (isNaN(amountInp) || amountInp <= 0 || amountInp > activeBalance) {
-                statusError.innerText = "Insufficient funds for this transfer.";
+                statusError.innerText = `Insufficient funds for this transfer. (Available: ${activeBalance.toFixed(2)})`;
                 statusError.style.display = 'block';
                 return;
             }
@@ -446,7 +449,6 @@
             submitBtn.innerText = "Processing...";
 
             try {
-                // Find recipient by accountNo matching accountInp
                 const usersRef = collection(db, "users");
                 const q = query(usersRef, where("accountNo", "==", accountInp));
                 const querySnapshot = await getDocs(q);
@@ -464,7 +466,6 @@
                 const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const activeCurrency = window.currentUserData.currency || "֏";
 
-                // Debit Sender
                 const senderNewBalance = activeBalance - amountInp;
                 const debitTx = {
                     title: "Transfer to " + nameInp,
@@ -486,9 +487,8 @@
                     transactions: arrayUnion(debitTx)
                 });
 
-                // Credit Recipient if found in database
                 if (recipientDocRef && recipientData) {
-                    let recipientRaw = recipientData.balance !== undefined && recipientData.balance !== null ? recipientData.balance : recipientData.amount;
+                    let recipientRaw = recipientData.balance ?? recipientData.amount ?? 0;
                     let recipientCurrentBal = parseNumericValue(recipientRaw);
 
                     const creditTx = {
