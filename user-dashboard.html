@@ -3,298 +3,339 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Apexon Bank Dashboard</title>
-    <!-- PWA MANIFEST LINK -->
+    <title>Apexon Bank | Dashboard</title>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(reg => console.log('Registered with scope:', reg.scope))
-            .catch(err => console.log('Registration failed:', err));
-        });
-      }
-    </script>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght=700&family=Space+Grotesk:wght=500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght=700&family=Space+Grotesk:wght=400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Start of Tawk.to Script -->
+    <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/6aba88484f795a343b370ead/default';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!-- End of Tawk.to Script -->
 
     <style>
         :root {
-            --bg-primary: #f4f6f8;
+            --bg-primary: #f8fafc;
             --bg-card: #ffffff;
-            --text-main: #1e293b;
+            --text-main: #0f172a;
             --text-sub: #64748b;
-            --border-color: rgba(0,0,0,0.05);
-            --header-bg: #ffffff;
-            --text-dark-override: #0f172a;
-            --hero-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            --hero-border: #b38728;
+            --border-color: #e2e8f0;
+            --header-bg: rgba(255, 255, 255, 0.85);
+            --tab-bg: #f1f5f9;
+            --hero-bg: linear-gradient(135deg, #0b1329 0%, #1a233a 100%);
+            --accent-gold: #b38728;
+            --gold-gradient: linear-gradient(135deg, #BF953F 0%, #FCF6BA 25%, #B38728 50%, #FBF5B7 75%, #AA771C 100%);
+            --success-green: #10b981;
+            --error-red: #ef4444;
         }
 
         body.dark-theme-active {
-            --bg-primary: #0b0f19;
-            --bg-card: #151f32;
-            --text-main: #f1f5f9;
+            --bg-primary: #070a12;
+            --bg-card: #0f172a;
+            --text-main: #f8fafc;
             --text-sub: #94a3b8;
-            --border-color: rgba(255,255,255,0.06);
-            --header-bg: #111827;
-            --text-dark-override: #ffffff;
-            --hero-bg: linear-gradient(135deg, #090d16 0%, #111827 100%);
-            --hero-border: #aa771C;
+            --border-color: #1e293b;
+            --header-bg: rgba(15, 23, 42, 0.85);
+            --tab-bg: #1e293b;
+            --hero-bg: linear-gradient(135deg, #030712 0%, #0f172a 100%);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
 
-        body {
-            width: 100vw;
+        html, body {
+            width: 100%;
             min-height: 100vh;
             background-color: var(--bg-primary);
             color: var(--text-main);
-            display: flex;
-            flex-direction: column;
             overflow-x: hidden;
-            padding-bottom: 85px; 
+            overflow-y: auto;
+            padding-bottom: 90px;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
             padding: 16px 20px;
             background-color: var(--header-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 1000;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         .logo {
             font-family: 'Cinzel', serif;
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 700;
-            background: linear-gradient(135deg, #BF953F 0%, #FCF6BA 25%, #B38728 50%, #FBF5B7 75%, #AA771C 100%);
+            background: var(--gold-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .logout-btn {
-            background: none;
-            border: 1px solid var(--text-sub);
-            padding: 8px 14px;
+            background: var(--tab-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            color: var(--text-sub);
             cursor: pointer;
-            transition: all 0.2s ease;
+            text-decoration: none;
         }
-
-        .logout-btn:hover { border-color: #ef4444; color: #ef4444; }
 
         .hero-banner {
             background: var(--hero-bg);
             color: #ffffff;
-            padding: 30px 20px;
-            border-bottom: 3px solid var(--hero-border);
-            transition: background 0.3s ease, border-color 0.3s ease;
+            padding: 24px 20px;
+            border-bottom: 2px solid var(--accent-gold);
+        }
+
+        .meta-line {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .welcome-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background: #3b82f6;
+            color: #ffffff;
+            border-radius: 50%;
+            font-size: 11px;
         }
 
         .balance-card {
             background: var(--bg-card);
-            border-radius: 16px;
-            padding: 24px 20px;
+            border-radius: 20px;
+            padding: 20px;
+            margin: -20px 20px 20px 20px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-            margin-top: -20px;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 10;
         }
 
-        .gold-accent-text { font-weight: 700; color: #b38728; }
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
 
-        .quick-action-grid {
+        .card-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pill {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-green);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success-green);
+            border-radius: 50%;
+        }
+
+        .balance-amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 16px;
+        }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 12px;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .account-num, .routing-num {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .page-container {
+            padding: 0 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 12px;
+        }
+
+        .grid-menu {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
-            margin-top: 20px;
+            margin-bottom: 24px;
         }
 
-        .action-card {
+        .menu-item {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-            cursor: pointer;
-            text-decoration: none; 
-            display: block;
-            transition: all 0.2s ease;
-        }
-
-        .action-card:active { transform: scale(0.97); opacity: 0.8; }
-        .action-icon { font-size: 24px; margin-bottom: 6px; display: inline-block; }
-
-        .transaction-list {
-            background: var(--bg-card);
             border-radius: 16px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            margin-top: 20px;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-size: 13px;
+            font-weight: 600;
+            transition: transform 0.15s ease, border-color 0.15s ease;
         }
 
-        .transaction-item {
+        .menu-item:active {
+            transform: scale(0.97);
+        }
+
+        .menu-icon {
+            font-size: 24px;
+        }
+
+        .activity-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .empty-activity {
+            text-align: center;
+            padding: 20px 0;
+            color: var(--text-sub);
+            font-size: 13px;
+        }
+
+        .tx-item {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            padding: 14px 0;
+            align-items: center;
+            padding: 12px 0;
             border-bottom: 1px solid var(--border-color);
         }
 
-        .transaction-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .tx-item:last-child {
+            border-bottom: none;
+        }
+
+        .tx-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .tx-info p {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .tx-amount {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .tx-amount.debit {
+            color: var(--error-red);
+        }
+
+        .tx-amount.credit {
+            color: var(--success-green);
+        }
 
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 65px;
+            height: 68px;
             background: var(--header-bg);
+            backdrop-filter: blur(12px);
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
             align-items: center;
             z-index: 9999;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.03);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             color: var(--text-sub);
             text-decoration: none;
             font-size: 11px;
             font-weight: 600;
-            width: 20%;
-            height: 100%;
-            transition: color 0.2s ease;
-            cursor: pointer;
         }
 
-        .nav-item.active { color: #b38728; }
-        .nav-icon { font-size: 20px; margin-bottom: 2px; }
-        
-        .card-title-text { font-size: 13px; font-weight: 700; color: var(--text-dark-override); }
-        .card-label-style { font-size: 12px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; }
-        .card-value-style { color: var(--text-dark-override); font-weight: 600; }
-
-        .verified-badge {
-            display: inline-flex;
-            align-items: center;
-            margin-left: 6px;
-            vertical-align: middle;
-        }
-
-        /* CUSTOM APEXON LOGOUT MODAL STYLING */
-        .apexon-modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .apexon-modal-backdrop.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .apexon-modal-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-top: 4px solid #b38728;
-            border-radius: 16px;
-            padding: 24px;
-            width: 90%;
-            max-width: 380px;
-            text-align: center;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-
-        .apexon-modal-backdrop.active .apexon-modal-card {
-            transform: scale(1);
-        }
-
-        .apexon-modal-title {
-            font-family: 'Cinzel', serif;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-dark-override);
-            margin-bottom: 8px;
-        }
-
-        .apexon-modal-body {
-            font-size: 14px;
-            color: var(--text-sub);
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-
-        .apexon-modal-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .apexon-btn {
-            flex: 1;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s ease;
-        }
-
-        .apexon-btn-cancel {
-            background: var(--bg-primary);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-        }
-
-        .apexon-btn-confirm {
-            background: #ef4444;
-            color: #ffffff;
-        }
-
-        .apexon-btn-confirm:hover {
-            background: #dc2626;
+        .nav-item.active {
+            color: var(--accent-gold);
         }
     </style>
 </head>
@@ -306,124 +347,73 @@
     </header>
 
     <div class="hero-banner">
-        <p style="font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;" id="accountCountryTag">Account  Active</p>
-        <h1 style="font-size: 24px; font-weight: 700; margin-top: 4px; display: flex; align-items: center;" id="welcomeName">
-            Welcome, <span id="userNameText">Loading...</span>
-            <span class="verified-badge" title="Verified Account">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10.5213 2.62368C11.3147 1.75257 12.6853 1.75257 13.4787 2.62368L14.4289 3.66709C14.8103 4.08589 15.3524 4.31038 15.918 4.2828L17.329 4.21405C18.5061 4.1567 19.538 5.01358 19.6738 6.18693L19.8362 7.5905C19.9013 8.15286 20.218 8.65306 20.7042 8.96251L21.9168 9.73447C22.9284 10.3783 23.3283 11.6669 22.8344 12.7538L22.2435 14.0543C22.0067 14.5753 22.0067 15.1747 22.2435 15.6957L22.8344 16.9962C23.3283 18.0831 22.9284 19.3717 21.9168 20.0155L20.7042 20.7875C20.218 21.0969 19.9013 21.5971 19.8362 22.1595L19.6738 23.5631C19.538 24.7364 18.5061 25.5933 17.329 25.536L15.918 25.5084C15.3524 25.4808 14.8103 25.7053 14.4289 26.1241L13.4787 27.1675C12.6853 28.0386 11.3147 28.0386 10.5213 27.1675L9.57112 26.1241C9.18973 25.7053 8.64761 25.4808 8.08199 25.5084L6.67104 25.536C5.49389 25.5933 4.46201 24.7364 4.32623 23.5631L4.16377 22.1595C4.09873 21.5971 3.78198 21.0969 3.29577 20.7875L2.08323 20.0155 C1.0716 19.3717 0.671687 18.0831 1.1656 16.9962L1.75654 15.6957C1.99333 15.1747 1.99333 14.5753 1.75654 14.0543L1.1656 12.7538C0.671687 11.6669 1.0716 10.3783 2.08323 9.73447L3.29577 8.96251C3.78198 8.65306 4.09873 8.15286 4.16377 7.5905L4.32623 6.18693C4.46201 5.01358 5.49389 4.1567 6.67104 4.21405L8.08199 4.2828C8.64761 4.31038 9.18973 4.08589 9.57112 3.66709L10.5213 2.62368Z" fill="#3B82F6"/>
-                    <path d="M9 15L11.5 17.5L16.5 11.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </span>
+        <p class="meta-line">ACCOUNT • <span id="userCountryDisplay">QATAR</span> • ACTIVE</p>
+        <h1 class="welcome-title">
+            Welcome, <span id="userNameDisplay">User</span>
+            <span class="verified-badge">✓</span>
         </h1>
     </div>
 
-    <div style="flex-grow: 1; padding: 0 20px 40px 20px;">
-        
-        <div class="balance-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                <div>
-                    <p class="card-label-style">Available Balance</p>
-                    <h2 style="font-size: 32px; font-weight: 700; color: var(--text-dark-override); margin-top: 4px;" id="accountBalance">CURRENT ACCOUNT BALANCE</h2>
-                </div>
-                <span style="background: #f0fdf4; color: #166534; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 9999px; border: 1px solid #bbf7d0;">● Live</span>
-            </div>
-            
-            <div style="border-top: 1px solid var(--border-color); padding-top: 14px; display: flex; justify-content: space-between; font-size: 13px;">
-                <div>
-                    <span style="color: var(--text-sub);">Account No:</span>
-                    <span class="card-value-style" style="margin-left: 4px;" id="accountNumber">--------------</span>
-                </div>
-                <div>
-                    <span style="color: var(--text-sub);">Routing :</span>
-                    <span class="gold-accent-text" style="margin-left: 4px;" id="routingText">APX-CURRENT</span>
-                </div>
-            </div>
+    <div class="balance-card">
+        <div class="card-top">
+            <span class="card-label">Available Balance</span>
+            <span class="status-pill"><span class="status-dot"></span> Live</span>
         </div>
+        <div class="balance-amount" id="userBalanceDisplay">Syncing...</div>
+        <div class="card-bottom">
+            <div>Account No: <span class="account-num" id="userAccountNo">QAT-4819203667</span></div>
+            <div>Routing: <span class="routing-num" id="userRouting">APX-QATAR</span></div>
+        </div>
+    </div>
 
-        <h3 style="font-size: 14px; font-weight: 700; color: var(--text-sub); margin-top: 25px; text-transform: uppercase; letter-spacing: 0.5px;">Clearing Operations</h3>
-        
-        <div class="quick-action-grid">
-            <a href="wire.html" class="action-card">
-                <div class="action-icon">💸</div>
-                <div class="card-title-text">Wire Transfer</div>
+    <div class="page-container">
+        <div class="section-title">Clearing Operations</div>
+        <div class="grid-menu">
+            <a href="wire.html" class="menu-item">
+                <span class="menu-icon">💸</span>
+                <span>Wire Transfer</span>
             </a>
-            
-            <a href="statements.html" class="action-card">
-                <div class="action-icon">📄</div>
-                <div class="card-title-text">Statements</div>
+            <a href="#" class="menu-item" onclick="alert('Statements functionality is active.'); return false;">
+                <span class="menu-icon">📄</span>
+                <span>Statements</span>
             </a>
-
-            <a href="deposit.html" class="action-card">
-                <div class="action-icon">📥</div>
-                <div class="card-title-text">Deposit Funds</div>
+            <a href="#" class="menu-item" onclick="alert('Deposit processing active.'); return false;">
+                <span class="menu-icon">📥</span>
+                <span>Deposit Funds</span>
             </a>
-
-            <a href="crypto.html" class="action-card">
-                <div class="action-icon">🪙</div>
-                <div class="card-title-text">Cryptocurrency</div>
+            <a href="#" class="menu-item" onclick="alert('Cryptocurrency settlement enabled.'); return false;">
+                <span class="menu-icon">🏛️</span>
+                <span>Cryptocurrency</span>
             </a>
-
-            <a href="airtime.html" class="action-card">
-                <div class="action-icon">📱</div>
-                <div class="card-title-text">Buy Airtime</div>
+            <a href="#" class="menu-item" onclick="alert('Buy Airtime portal ready.'); return false;">
+                <span class="menu-icon">📱</span>
+                <span>Buy Airtime</span>
             </a>
-
-            <a href="giftcard.html" class="action-card">
-                <div class="action-icon">💳</div>
-                <div class="card-title-text">Gift Card</div>
+            <a href="#" class="menu-item" onclick="alert('Gift Card redemption active.'); return false;">
+                <span class="menu-icon">💳</span>
+                <span>Gift Card</span>
             </a>
         </div>
 
-        <div class="transaction-list">
-            <h3 style="font-size: 14px; font-weight: 700; color: var(--text-dark-override); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Recent Activity</h3>
-            <div id="ledgerContainer">
-                <p style="font-size: 12px; color: var(--text-sub); text-align: center; padding: 10px 0;">Loading transactions...</p>
-            </div>
+        <div class="section-title">Recent Activity</div>
+        <div class="activity-card" id="activityContainer">
+            <div class="empty-activity">No active clearing items.</div>
         </div>
     </div>
 
     <div class="bottom-nav">
-        <a href="user-dashboard.html" class="nav-item active">
-            <div class="nav-icon">🏛️</div>
-            <div>Home</div>
-        </a>
-        <a href="loans.html" class="nav-item">
-            <div class="nav-icon">💰</div>
-            <div>Loans</div>
-        </a>
-        <a href="card.html" class="nav-item">
-            <div class="nav-icon">💳</div>
-            <div>Cards</div>
-        </a>
-        <a href="profile.html" class="nav-item">
-            <div class="nav-icon">👤</div>
-            <div>Profile</div>
-        </a>
-        <a href="settings.html" class="nav-item">
-            <div class="nav-icon">⚙️</div>
-            <div>Settings</div>
-        </a>
+        <a href="user-dashboard.html" class="nav-item active"><div style="font-size: 20px;">🏛️</div><div>Home</div></a>
+        <a href="loans.html" class="nav-item"><div style="font-size: 20px;">💰</div><div>Loans</div></a>
+        <a href="card.html" class="nav-item"><div style="font-size: 20px;">💳</div><div>Cards</div></a>
+        <a href="profile.html" class="nav-item"><div style="font-size: 20px;">👤</div><div>Profile</div></a>
+        <a href="settings.html" class="nav-item"><div style="font-size: 20px;">⚙️️</div><div>Settings</div></a>
     </div>
 
-    <!-- CUSTOM APEXON LOGOUT MODAL -->
-    <div class="apexon-modal-backdrop" id="logoutModal">
-        <div class="apexon-modal-card">
-            <div style="font-size: 32px; margin-bottom: 8px;">🔒</div>
-            <div class="apexon-modal-title">Apexon Bank</div>
-            <div class="apexon-modal-body">Are you sure you want to end your current banking session?</div>
-            <div class="apexon-modal-actions">
-                <button class="apexon-btn apexon-btn-cancel" id="cancelLogoutBtn">Cancel</button>
-                <button class="apexon-btn apexon-btn-confirm" id="confirmLogoutBtn">Sign Out</button>
-            </div>
-        </div>
-    </div>
-
-   <!-- FIREBASE MODULES & LIVE FIRESTORE SYNC -->
+    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCrjHf4jXF-12q0Ux9FXuC9qvPbtSybiGg",
@@ -439,170 +429,101 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let unsubscribeUserDoc = null;
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        // Generate unique account number based on user's country
-        function generateUniqueAccountNumber(country) {
-            const countryCodes = {
-                'qatar': 'QAT',
-                'nigeria': 'NGA',
-                'united states': 'USA',
-                'us': 'USA',
-                'united kingdom': 'GBR',
-                'uk': 'GBR',
-                'canada': 'CAN',
-                'uae': 'ARE',
-                'united arab emirates': 'ARE',
-                'germany': 'DEU',
-                'france': 'FRA'
-            };
-
-            const cleanCountry = (country || 'qatar').trim().toLowerCase();
-            const prefix = countryCodes[cleanCountry] || cleanCountry.substring(0, 3).toUpperCase();
+        // Robust Balance Parser handling strings like "100 0.00", "₹100 0.00", or raw numbers
+        function parseNumericValue(val) {
+            if (val === undefined || val === null) return 0;
+            if (typeof val === 'number') return val;
             
-            const randomDigits = Math.floor(1000000000 + Math.random() * 9000000000);
-            return `${prefix}-${randomDigits}`;
+            let str = String(val).trim();
+            
+            if (str.includes(" ")) {
+                let parts = str.split(/\s+/).map(p => p.replace(/[^0-9.-]/g, '')).filter(Boolean);
+                if (parts.length === 2) {
+                    str = parts[0] + "." + parts[1];
+                } else {
+                    str = parts.join('');
+                }
+            } else {
+                str = str.replace(/[^0-9.-]/g, '');
+            }
+
+            return parseFloat(str) || 0;
         }
 
-        // Authenticate User State
+        function renderDashboardData(data) {
+            if (!data) return;
+
+            if (data.fullName || data.name) {
+                document.getElementById('userNameDisplay').innerText = data.fullName || data.name;
+            }
+            if (data.country) {
+                document.getElementById('userCountryDisplay').innerText = data.country.toUpperCase();
+            }
+            if (data.accountNo) {
+                document.getElementById('userAccountNo').innerText = data.accountNo;
+            }
+            if (data.routingCode || data.routing) {
+                document.getElementById('userRouting').innerText = data.routingCode || data.routing;
+            }
+
+            const currency = data.currency || "₹";
+            let rawVal = data.balance !== undefined && data.balance !== null ? data.balance : data.amount;
+            let balance = parseNumericValue(rawVal);
+
+            const formatted = balance.toLocaleString('en-US', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+
+            document.getElementById('userBalanceDisplay').innerText = `${currency}${formatted}`;
+
+            // Render Recent Transactions Activity
+            const activityContainer = document.getElementById('activityContainer');
+            if (data.transactions && Array.isArray(data.transactions) && data.transactions.length > 0) {
+                activityContainer.innerHTML = "";
+                const recentTxs = [...data.transactions].reverse().slice(0, 5);
+
+                recentTxs.forEach(tx => {
+                    const txDiv = document.createElement('div');
+                    txDiv.className = 'tx-item';
+
+                    const isDebit = tx.type === 'debit';
+                    const sign = isDebit ? '-' : '+';
+                    const cls = isDebit ? 'debit' : 'credit';
+                    const txAmount = parseNumericValue(tx.amount);
+
+                    txDiv.innerHTML = `
+                        <div class="tx-info">
+                            <h4>${tx.title || 'Transaction'}</h4>
+                            <p>${tx.date || ''} ${tx.time ? '• ' + tx.time : ''}</p>
+                        </div>
+                        <div class="tx-amount ${cls}">
+                            ${sign}${tx.currency || currency}${txAmount.toFixed(2)}
+                        </div>
+                    `;
+                    activityContainer.appendChild(txDiv);
+                });
+            } else {
+                activityContainer.innerHTML = '<div class="empty-activity">No active clearing items.</div>';
+            }
+        }
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                const userDocRef = doc(db, "users", user.uid);
-                
-                unsubscribeUserDoc = onSnapshot(userDocRef, async (snapshot) => {
-                    if (snapshot.exists()) {
-                        const userData = snapshot.data();
-                        
-                        // Check if user needs an account number generated
-                        if (!userData.accountNo || userData.accountNo === "--------------" || userData.accountNo === "N/A") {
-                            const newAccountNo = generateUniqueAccountNumber(userData.country);
-                            try {
-                                await updateDoc(userDocRef, { accountNo: newAccountNo });
-                                userData.accountNo = newAccountNo;
-                            } catch (e) {
-                                console.error("Error updating account number:", e);
-                            }
-                        }
-
-                        renderDashboard(userData);
-                    } else {
-                        console.error("User document does not exist in Firestore.");
+                const userRef = doc(db, "users", user.uid);
+                onSnapshot(userRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        renderDashboardData(docSnap.data());
                     }
-                }, (error) => {
-                    console.error("Firestore error listening to user document:", error);
                 });
             } else {
                 window.location.href = "login.html";
             }
         });
 
-     // Render UI with user's real registration and account data
-function renderDashboard(data) {
-    const userNameText = document.getElementById('userNameText');
-    const accountBalance = document.getElementById('accountBalance');
-    const accountNumber = document.getElementById('accountNumber');
-    const accountCountryTag = document.getElementById('accountCountryTag');
-    const routingText = document.getElementById('routingText');
-    const ledgerContainer = document.getElementById('ledgerContainer');
-
-    const currency = data.currency || 'QAR';
-    const country = data.country || 'Qatar';
-
-    if (userNameText) userNameText.innerText = escapeHtml(data.fullName || "Valued Customer");
-    if (accountCountryTag) accountCountryTag.innerText = `ACCOUNT • ${country.toUpperCase()} • ACTIVE`;
-    if (accountNumber) accountNumber.innerText = escapeHtml(data.accountNo || "N/A");
-    if (routingText) routingText.innerText = `APX-${country.substring(0, 5).toUpperCase()}`;
-
-    // SAFELY PARSE BALANCE
-    let rawVal = data.balance !== undefined && data.balance !== null ? data.balance : data.amount;
-    let rawBalance = 0;
-
-    if (typeof rawVal === 'number') {
-        rawBalance = rawVal;
-    } else if (typeof rawVal === 'string') {
-        // Strip out currency codes, commas, symbols, and spaces
-        const cleanedStr = rawVal.replace(/[^0-9.-]/g, '');
-        rawBalance = parseFloat(cleanedStr) || 0;
-    }
-
-    // Save numeric balance to localStorage
-    localStorage.setItem('userBalance', rawBalance.toString());
-    localStorage.setItem('userCurrency', currency);
-
-    if (accountBalance) {
-        accountBalance.innerText = `${currency} ${rawBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
-
-    // Render Recent Activity/Transactions
-    if (ledgerContainer) {
-        const transactions = data.transactions || [];
-        if (Array.isArray(transactions) && transactions.length > 0) {
-            let html = '';
-            for (let i = transactions.length - 1; i >= 0; i--) {
-                const tx = transactions[i];
-                const isCredit = tx.type === 'credit';
-                const sign = isCredit ? `+ ${currency} ` : `- ${currency} `;
-                const color = isCredit ? "#166534" : "#ef4444";
-
-                let txAmount = 0;
-                if (typeof tx.amount === 'number') {
-                    txAmount = tx.amount;
-                } else if (typeof tx.amount === 'string') {
-                    txAmount = parseFloat(tx.amount.replace(/[^0-9.-]/g, '')) || 0;
-                }
-
-                html += `
-                    <div class="transaction-item">
-                        <div>
-                            <p style="font-size: 13px; font-weight: 600; color: var(--text-dark-override);">${escapeHtml(tx.description || 'Transaction')}</p>
-                            <p style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.sender || 'Clearing Node')}</p>
-                            ${tx.date ? `<p style="font-size: 10px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.date)}${tx.time ? ' • ' + escapeHtml(tx.time) : ''}</p>` : ''}
-                        </div>
-                        <div style="text-align: right;">
-                            <p style="font-size: 13px; font-weight: 700; color: ${color};">${sign}${txAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                            <p style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.status || 'Successful')}</p>
-                        </div>
-                    </div>
-                `;
-            }
-            ledgerContainer.innerHTML = html;
-        } else {
-            ledgerContainer.innerHTML = `<p style="font-size: 12px; color: var(--text-sub); text-align: center; padding: 10px 0;">No active clearing items.</p>`;
-        }
-    }
-}
-
-
-        // Apexon Custom Modal Logout Logic
-        const logoutModal = document.getElementById('logoutModal');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
-        const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
-
-        logoutBtn.addEventListener('click', () => {
-            logoutModal.classList.add('active');
-        });
-
-        cancelLogoutBtn.addEventListener('click', () => {
-            logoutModal.classList.remove('active');
-        });
-
-        confirmLogoutBtn.addEventListener('click', () => {
-            if (unsubscribeUserDoc) unsubscribeUserDoc();
+        document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth).then(() => {
                 window.location.href = "login.html";
-            }).catch((err) => {
-                console.error("Logout error:", err);
             });
         });
     </script>

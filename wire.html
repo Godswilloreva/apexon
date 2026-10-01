@@ -456,7 +456,7 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, updateDoc, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-        // Exact Firebase Configuration from Dashboard
+        // Exact Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCrjHf4jXF-12q0Ux9FXuC9qvPbtSybiGg",
             authDomain: "apexon-18436.firebaseapp.com",
@@ -475,19 +475,35 @@
         window.currentUserData = null;
         window.currentUserId = null;
 
-        // Sync Dashboard UI details safely
+        // Robust Balance Parser handling strings like "100 0.00", "₹100 0.00", or raw numbers
+        function parseNumericValue(val) {
+            if (val === undefined || val === null) return 0;
+            if (typeof val === 'number') return val;
+            
+            let str = String(val).trim();
+            
+            // If the string contains spaces (e.g. "100 0.00"), merge them correctly
+            if (str.includes(" ")) {
+                let parts = str.split(/\s+/).map(p => p.replace(/[^0-9.-]/g, '')).filter(Boolean);
+                if (parts.length === 2) {
+                    str = parts[0] + "." + parts[1];
+                } else {
+                    str = parts.join('');
+                }
+            } else {
+                str = str.replace(/[^0-9.-]/g, '');
+            }
+
+            return parseFloat(str) || 0;
+        }
+
+        // Sync UI details safely
         function syncDashboardUI(data) {
             if (!data) return;
 
-            const currency = data.currency || "USD";
+            const currency = data.currency || "₹";
             let rawVal = data.balance !== undefined && data.balance !== null ? data.balance : data.amount;
-            let balance = 0;
-
-            if (typeof rawVal === 'number') {
-                balance = rawVal;
-            } else if (typeof rawVal === 'string') {
-                balance = parseFloat(rawVal.replace(/[^0-9.-]/g, '')) || 0;
-            }
+            let balance = parseNumericValue(rawVal);
 
             document.querySelectorAll('.currencySymbol').forEach(el => el.innerText = currency);
 
@@ -496,7 +512,7 @@
                 maximumFractionDigits: 2 
             });
 
-            document.getElementById('liveBalanceDisplay').innerText = `${currency} ${formatted}`;
+            document.getElementById('liveBalanceDisplay').innerText = `${currency}${formatted}`;
             
             const country = data.country || "Qatar";
             document.getElementById('channelIndicator').innerHTML = `<span class="channel-dot"></span> ${country} Node`;
@@ -508,7 +524,7 @@
                 window.currentUserId = user.uid;
                 window.activeUserDocRef = doc(db, "users", user.uid);
 
-                // Real-time Firestore snapshot listener matching dashboard structure
+                // Real-time Firestore snapshot listener
                 onSnapshot(window.activeUserDocRef, (docSnap) => {
                     if (docSnap.exists()) {
                         window.currentUserData = docSnap.data();
@@ -546,12 +562,7 @@
                 ? window.currentUserData.balance 
                 : window.currentUserData.amount;
 
-            let activeBalance = 0;
-            if (typeof rawVal === 'number') {
-                activeBalance = rawVal;
-            } else if (typeof rawVal === 'string') {
-                activeBalance = parseFloat(rawVal.replace(/[^0-9.-]/g, '')) || 0;
-            }
+            let activeBalance = parseNumericValue(rawVal);
 
             if (isNaN(amountInp) || amountInp <= 0 || amountInp > activeBalance) {
                 balanceError.style.display = 'block';
@@ -572,7 +583,7 @@
             modalActions.style.display = "none";
             modal.classList.add('active');
 
-            const activeCurrency = window.currentUserData.currency || "USD";
+            const activeCurrency = window.currentUserData.currency || "₹";
             const isInternalApexon = bankInp.toLowerCase().includes("apexon");
 
             setTimeout(async function() {
@@ -581,7 +592,6 @@
                 const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                 if (isInternalApexon) {
-                    // Check if receiver account exists in Apexon Bank database
                     try {
                         const usersRef = collection(db, "users");
                         const q = query(usersRef, where("accountNo", "==", accountInp));
@@ -595,7 +605,7 @@
                             recipientData = docSnap.data();
                         });
 
-                        // 1. Debit sender
+                        // Debit sender
                         const senderNewBalance = activeBalance - amountInp;
                         const debitTx = {
                             title: "Transfer to " + nameInp,
@@ -614,18 +624,14 @@
 
                         await updateDoc(window.activeUserDocRef, {
                             balance: senderNewBalance,
+                            amount: senderNewBalance,
                             transactions: arrayUnion(debitTx)
                         });
 
-                        // 2. Credit recipient if found within system
+                        // Credit recipient if found
                         if (recipientDocRef && recipientData) {
                             let recipientRaw = recipientData.balance !== undefined && recipientData.balance !== null ? recipientData.balance : recipientData.amount;
-                            let recipientCurrentBal = 0;
-                            if (typeof recipientRaw === 'number') {
-                                recipientCurrentBal = recipientRaw;
-                            } else if (typeof recipientRaw === 'string') {
-                                recipientCurrentBal = parseFloat(recipientRaw.replace(/[^0-9.-]/g, '')) || 0;
-                            }
+                            let recipientCurrentBal = parseNumericValue(recipientRaw);
 
                             const creditTx = {
                                 title: "Received from " + (window.currentUserData.fullName || "Apexon User"),
@@ -642,13 +648,14 @@
 
                             await updateDoc(recipientDocRef, {
                                 balance: recipientCurrentBal + amountInp,
+                                amount: recipientCurrentBal + amountInp,
                                 transactions: arrayUnion(creditTx)
                             });
                         }
 
                         modalIcon.innerText = "✅";
                         modalTitle.innerText = "Transfer Successful";
-                        modalBody.innerHTML = `Internal transfer of <strong>${activeCurrency} ${amountInp.toFixed(2)}</strong> to <strong>${nameInp}</strong> was successful.`;
+                        modalBody.innerHTML = `Internal transfer of <strong>${activeCurrency}${amountInp.toFixed(2)}</strong> to <strong>${nameInp}</strong> was successful.`;
 
                         modalPrimaryBtn.innerText = "Done";
                         modalPrimaryBtn.onclick = function() {
@@ -670,7 +677,6 @@
                     }
 
                 } else {
-                    // Transfer to an external non-Apexon bank
                     modalIcon.innerText = "🛡️";
                     modalTitle.innerText = "Face Live Verification Required";
                     modalBody.innerText = "Security protocol requires face live verification with customer care for transfers outside Apexon Bank. Please contact live support to complete security authorization.";
