@@ -258,6 +258,12 @@
             font-weight: 700;
             cursor: pointer;
             margin-top: 10px;
+            transition: opacity 0.2s;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .bottom-nav {
@@ -423,7 +429,7 @@
                 <textarea id="narration" rows="2" placeholder="Purpose of transaction (Optional)"></textarea>
             </div>
 
-            <button type="submit" class="action-btn">Transfer</button>
+            <button type="submit" id="submitBtn" class="action-btn">Transfer</button>
         </form>
     </div>
 
@@ -473,24 +479,24 @@
         window.activeUserDocRef = null;
         window.currentUserData = null;
         window.currentUserId = null;
+        window.parsedAvailableBalance = 0; // State variable to cache numerical balance
 
-        // Universal Balance Parser for raw numbers or strings like "֏5000000.00", "5000000.00", "₹100 0.00"
+        // Hardened Numeric Parser for localized strings, symbol prefixes, and spaces
         function parseNumericValue(val) {
             if (val === undefined || val === null) return 0;
-            if (typeof val === 'number') return val;
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
 
-            let str = String(val).trim();
+            // Normalize all white-space variations including non-breaking spaces
+            let str = String(val).replace(/[\s\u00A0\u2009]+/g, ' ').trim();
 
-            // Replace spaces if it's formatted like "5000000 0.00"
             if (str.includes(" ")) {
-                let parts = str.split(/\s+/).map(p => p.replace(/[^0-9.-]/g, '')).filter(Boolean);
+                let parts = str.split(' ').map(p => p.replace(/[^0-9.-]/g, '')).filter(Boolean);
                 if (parts.length === 2) {
                     str = parts[0] + "." + parts[1];
                 } else {
                     str = parts.join('');
                 }
             } else {
-                // Remove everything except digits and dot
                 str = str.replace(/[^0-9.-]/g, '');
             }
 
@@ -503,11 +509,13 @@
 
             const currency = data.currency || "֏";
             let rawVal = data.balance !== undefined && data.balance !== null ? data.balance : data.amount;
-            let balance = parseNumericValue(rawVal);
+            
+            // Calculate and cache global numeric balance state
+            window.parsedAvailableBalance = parseNumericValue(rawVal);
 
             document.querySelectorAll('.currencySymbol').forEach(el => el.innerText = currency);
 
-            const formatted = balance.toLocaleString('en-US', { 
+            const formatted = window.parsedAvailableBalance.toLocaleString('en-US', { 
                 minimumFractionDigits: 2, 
                 maximumFractionDigits: 2 
             });
@@ -517,6 +525,11 @@
             const country = data.country || "Qatar";
             document.getElementById('channelIndicator').innerHTML = `<span class="channel-dot"></span> ${country} Node`;
         }
+
+        // Live input validation to reset errors on keyup
+        document.getElementById('transferAmount').addEventListener('input', function() {
+            document.getElementById('balanceError').style.display = 'none';
+        });
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -539,8 +552,13 @@
         document.getElementById('wireTransferForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            const balanceError = document.getElementById('balanceError');
+            balanceError.style.display = 'none';
+
+            // Check if account data has finished loading from Firebase
             if (!window.activeUserDocRef || !window.currentUserData) {
-                alert("Syncing user backend... please try again in a moment.");
+                balanceError.innerText = "Syncing account data... please try again in a moment.";
+                balanceError.style.display = 'block';
                 return;
             }
 
@@ -549,18 +567,12 @@
             const bankInp = document.getElementById('bankName').value.trim();
             const amountInp = parseFloat(document.getElementById('transferAmount').value);
             const narrationInp = document.getElementById('narration').value.trim();
-            const balanceError = document.getElementById('balanceError');
 
-            balanceError.style.display = 'none';
+            const activeBalance = window.parsedAvailableBalance;
 
-            let rawVal = window.currentUserData.balance !== undefined && window.currentUserData.balance !== null 
-                ? window.currentUserData.balance 
-                : window.currentUserData.amount;
-
-            let activeBalance = parseNumericValue(rawVal);
-
-            // Validation Check against active balance
+            // Strict Validation against active numerical balance
             if (isNaN(amountInp) || amountInp <= 0 || amountInp > activeBalance) {
+                balanceError.innerText = "Insufficient available funds for this transfer.";
                 balanceError.style.display = 'block';
                 return;
             }
@@ -655,6 +667,7 @@
                         modalPrimaryBtn.onclick = function() {
                             modal.classList.remove('active');
                             document.getElementById('wireTransferForm').reset();
+                            document.getElementById('balanceError').style.display = 'none';
                         };
                         modalCloseBtn.style.display = "none";
                         modalActions.style.display = "flex";
