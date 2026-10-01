@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Apexon Bank | Wire Gateway</title>
+    <title>Apexon Bank | Transfer</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -362,13 +362,13 @@
     <div class="balance-hero">
         <div class="hero-meta">
             <div>
-                <p class="hero-label">Available Vault Balance</p>
+                <p class="hero-label">Available Balance</p>
                 <h2 class="hero-val" id="liveBalanceDisplay">Syncing...</h2>
             </div>
             <div style="text-align: right;">
                 <p class="hero-label">Network</p>
                 <span class="channel-tag" id="channelIndicator">
-                    <span class="channel-dot"></span> Node Active
+                    <span class="channel-dot"></span> Active
                 </span>
             </div>
         </div>
@@ -415,7 +415,7 @@
             <div class="input-group">
                 <label>💰 Transfer Amount (<span class="currencySymbol">USD</span>)</label>
                 <input type="number" step="0.01" id="transferAmount" placeholder="0.00" required>
-                <div class="error-msg" id="balanceError">⚠️ Transfer amount exceeds available clearing funds</div>
+                <div class="error-msg" id="balanceError"> SUCCESSFUL</div>
             </div>
 
             <div class="input-group">
@@ -423,7 +423,7 @@
                 <textarea id="narration" rows="2" placeholder="Purpose of transaction (Optional)"></textarea>
             </div>
 
-            <button type="submit" class="action-btn">Authorize Wire Transfer</button>
+            <button type="submit" class="action-btn"> Transfer</button>
         </form>
     </div>
 
@@ -440,7 +440,7 @@
             <div style="font-size: 48px; margin-bottom: 14px;" id="modalIcon">⏳</div>
             <h2 style="font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;" id="modalTitle">Processing Request</h2>
             <p style="font-size: 14px; color: var(--text-sub); line-height: 1.5; margin-bottom: 16px;" id="modalBody">
-                Connecting to secure backend node...
+                PLEASE WAIT...
             </p>
 
             <div class="btn-stack" id="modalActions" style="display: none;">
@@ -639,7 +639,7 @@
                         console.error("Transfer Error:", err);
                         modalIcon.innerText = "❌";
                         modalTitle.innerText = "Transaction Failed";
-                        modalBody.innerText = "Could not process internal transfer. Please try again later.";
+                        modalBody.innerText = "Could not process, kindly message the live chat customer care.";
                         modalPrimaryBtn.innerText = "Close";
                         modalPrimaryBtn.onclick = function() { modal.classList.remove('active'); };
                         modalCloseBtn.style.display = "none";
