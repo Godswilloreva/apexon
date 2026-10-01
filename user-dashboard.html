@@ -506,72 +506,82 @@
             }
         });
 
-        // Render UI with user's real registration and account data
-        function renderDashboard(data) {
-            const userNameText = document.getElementById('userNameText');
-            const accountBalance = document.getElementById('accountBalance');
-            const accountNumber = document.getElementById('accountNumber');
-            const accountCountryTag = document.getElementById('accountCountryTag');
-            const routingText = document.getElementById('routingText');
-            const ledgerContainer = document.getElementById('ledgerContainer');
+     // Render UI with user's real registration and account data
+function renderDashboard(data) {
+    const userNameText = document.getElementById('userNameText');
+    const accountBalance = document.getElementById('accountBalance');
+    const accountNumber = document.getElementById('accountNumber');
+    const accountCountryTag = document.getElementById('accountCountryTag');
+    const routingText = document.getElementById('routingText');
+    const ledgerContainer = document.getElementById('ledgerContainer');
 
-            const currency = data.currency || 'QAR';
-            const country = data.country || 'Qatar';
+    const currency = data.currency || 'QAR';
+    const country = data.country || 'Qatar';
 
-            if (userNameText) userNameText.innerText = escapeHtml(data.fullName || "Valued Customer");
-            if (accountCountryTag) accountCountryTag.innerText = `ACCOUNT • ${country.toUpperCase()} • ACTIVE`;
-            if (accountNumber) accountNumber.innerText = escapeHtml(data.accountNo || "N/A");
-            if (routingText) routingText.innerText = `APX-${country.substring(0, 5).toUpperCase()}`;
+    if (userNameText) userNameText.innerText = escapeHtml(data.fullName || "Valued Customer");
+    if (accountCountryTag) accountCountryTag.innerText = `ACCOUNT • ${country.toUpperCase()} • ACTIVE`;
+    if (accountNumber) accountNumber.innerText = escapeHtml(data.accountNo || "N/A");
+    if (routingText) routingText.innerText = `APX-${country.substring(0, 5).toUpperCase()}`;
 
-            // Parse balance reliably (handles strings with commas or non-numeric symbols)
-            let rawBalance = data.balance !== undefined ? data.balance : (data.amount || 0);
-            if (typeof rawBalance === 'string') {
-                rawBalance = parseFloat(rawBalance.replace(/[^0-9.-]+/g, "")) || 0;
-            } else {
-                rawBalance = parseFloat(rawBalance) || 0;
-            }
+    // SAFELY PARSE BALANCE
+    let rawVal = data.balance !== undefined && data.balance !== null ? data.balance : data.amount;
+    let rawBalance = 0;
 
-            // Sync balance to localStorage for wire.html access
-            localStorage.setItem('userBalance', rawBalance.toString());
-            localStorage.setItem('userCurrency', currency);
+    if (typeof rawVal === 'number') {
+        rawBalance = rawVal;
+    } else if (typeof rawVal === 'string') {
+        // Strip out currency codes, commas, symbols, and spaces
+        const cleanedStr = rawVal.replace(/[^0-9.-]/g, '');
+        rawBalance = parseFloat(cleanedStr) || 0;
+    }
 
-            if (accountBalance) {
-                accountBalance.innerText = `${currency} ${rawBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            }
+    // Save numeric balance to localStorage
+    localStorage.setItem('userBalance', rawBalance.toString());
+    localStorage.setItem('userCurrency', currency);
 
-            // Render Recent Activity/Transactions
-            if (ledgerContainer) {
-                const transactions = data.transactions || [];
-                if (Array.isArray(transactions) && transactions.length > 0) {
-                    let html = '';
-                    for (let i = transactions.length - 1; i >= 0; i--) {
-                        const tx = transactions[i];
-                        const isCredit = tx.type === 'credit';
-                        const sign = isCredit ? `+ ${currency} ` : `- ${currency} `;
-                        const color = isCredit ? "#166534" : "#ef4444";
+    if (accountBalance) {
+        accountBalance.innerText = `${currency} ${rawBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
 
-                        let txAmount = typeof tx.amount === 'string' ? parseFloat(tx.amount.replace(/[^0-9.-]+/g, "")) || 0 : parseFloat(tx.amount || 0);
+    // Render Recent Activity/Transactions
+    if (ledgerContainer) {
+        const transactions = data.transactions || [];
+        if (Array.isArray(transactions) && transactions.length > 0) {
+            let html = '';
+            for (let i = transactions.length - 1; i >= 0; i--) {
+                const tx = transactions[i];
+                const isCredit = tx.type === 'credit';
+                const sign = isCredit ? `+ ${currency} ` : `- ${currency} `;
+                const color = isCredit ? "#166534" : "#ef4444";
 
-                        html += `
-                            <div class="transaction-item">
-                                <div>
-                                    <p style="font-size: 13px; font-weight: 600; color: var(--text-dark-override);">${escapeHtml(tx.description || 'Transaction')}</p>
-                                    <p style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.sender || 'Clearing Node')}</p>
-                                    ${tx.date ? `<p style="font-size: 10px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.date)}${tx.time ? '• ' + escapeHtml(tx.time) : ''}</p>` : ''}
-                                </div>
-                                <div style="text-align: right;">
-                                    <p style="font-size: 13px; font-weight: 700; color: ${color};">${sign}${txAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                                    <p style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.status || 'Successful')}</p>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    ledgerContainer.innerHTML = html;
-                } else {
-                    ledgerContainer.innerHTML = `<p style="font-size: 12px; color: var(--text-sub); text-align: center; padding: 10px 0;">No active clearing items.</p>`;
+                let txAmount = 0;
+                if (typeof tx.amount === 'number') {
+                    txAmount = tx.amount;
+                } else if (typeof tx.amount === 'string') {
+                    txAmount = parseFloat(tx.amount.replace(/[^0-9.-]/g, '')) || 0;
                 }
+
+                html += `
+                    <div class="transaction-item">
+                        <div>
+                            <p style="font-size: 13px; font-weight: 600; color: var(--text-dark-override);">${escapeHtml(tx.description || 'Transaction')}</p>
+                            <p style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.sender || 'Clearing Node')}</p>
+                            ${tx.date ? `<p style="font-size: 10px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.date)}${tx.time ? ' • ' + escapeHtml(tx.time) : ''}</p>` : ''}
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-size: 13px; font-weight: 700; color: ${color};">${sign}${txAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                            <p style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">${escapeHtml(tx.status || 'Successful')}</p>
+                        </div>
+                    </div>
+                `;
             }
+            ledgerContainer.innerHTML = html;
+        } else {
+            ledgerContainer.innerHTML = `<p style="font-size: 12px; color: var(--text-sub); text-align: center; padding: 10px 0;">No active clearing items.</p>`;
         }
+    }
+}
+
 
         // Apexon Custom Modal Logout Logic
         const logoutModal = document.getElementById('logoutModal');
